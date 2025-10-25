@@ -12,7 +12,7 @@ export default function RegisterPage(){
   const form = useForm({ resolver: zodResolver(schema), defaultValues:{ email:'', username:'', password:'' } })
   const onSubmit = form.handleSubmit(async (v)=>{
   try {
-    const res = await fetch(`undefined/auth/register`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ email: v.email, username: v.username, password: v.password }) });
+    const res = await fetch('/api/auth/register', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ email: v.email, username: v.username, password: v.password }) });
     const data = await res.json();
     if(!res.ok) throw new Error(data.message || 'Register failed');
     window.location.href = '/login';

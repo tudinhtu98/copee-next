@@ -13,6 +13,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/dashboard/products">Sản phẩm</Link>
           <Link href="/dashboard/settings">Cài đặt</Link>
           <Link href="/dashboard/billing">Nạp tiền</Link>
+          <Link href="/dashboard/billing/history">Lịch sử giao dịch</Link>
           {role === 'ADMIN' || role === 'MOD' ? <Link href="/admin">Admin</Link> : null}
         </nav>
       </aside>
