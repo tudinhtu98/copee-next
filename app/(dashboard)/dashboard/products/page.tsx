@@ -65,7 +65,10 @@ type Product = {
   category: string | null
   price: number | null
   description: string | null
+  images?: string[] | null
+  currency?: string | null
   createdAt: string
+  updatedAt?: string
 }
 
 type Site = {
@@ -230,6 +233,11 @@ export default function ProductsPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false)
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null)
 
   useEffect(() => {
     const currentProductIds = products.map((p) => p.id)
@@ -338,10 +346,63 @@ export default function ProductsPage() {
     }
   }
 
+  async function onDeleteProduct() {
+    if (!deletingProduct) return
+
+    try {
+      setIsDeleting(true)
+      const res = await fetch(`/api/proxy/products/${deletingProduct.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: 'Không thể xóa sản phẩm' }))
+        throw new Error(data.message || 'Không thể xóa sản phẩm')
+      }
+      alert('Đã xóa sản phẩm')
+      setDeletingProduct(null)
+      mutateProducts()
+      // Remove from selected if it was selected
+      setSelected((prev) => prev.filter((id) => id !== deletingProduct.id))
+    } catch (e: any) {
+      alert(e.message || 'Không thể xóa sản phẩm')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  async function onBulkDelete() {
+    if (selected.length === 0) {
+      alert('Vui lòng chọn ít nhất một sản phẩm để xóa')
+      return
+    }
+
+    try {
+      setIsBulkDeleting(true)
+      const res = await fetch('/api/proxy/products/bulk', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productIds: selected }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: 'Không thể xóa sản phẩm' }))
+        throw new Error(data.message || 'Không thể xóa sản phẩm')
+      }
+      const data = await res.json()
+      alert(data.message || `Đã xóa ${selected.length} sản phẩm`)
+      setSelected([])
+      setShowBulkDeleteConfirm(false)
+      mutateProducts()
+    } catch (e: any) {
+      alert(e.message || 'Không thể xóa sản phẩm')
+    } finally {
+      setIsBulkDeleting(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-semibold">Sản phẩm</h1>
+    <h1 className="text-2xl font-semibold">Sản phẩm</h1>
         <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
           Thêm sản phẩm
         </Button>
@@ -422,13 +483,20 @@ export default function ProductsPage() {
           >
             {allSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
           </Button>
+          <Button
+            variant="destructive"
+            onClick={() => setShowBulkDeleteConfirm(true)}
+            disabled={selected.length === 0}
+          >
+            Xóa đã chọn ({selected.length})
+          </Button>
           <Button onClick={onBulk} disabled={isCreatingJob || selected.length === 0}>
             {isCreatingJob ? 'Đang tạo...' : 'Tạo job upload'}
           </Button>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2">
         <Button onClick={onProcessUploads} disabled={isProcessing}>
           {isProcessing ? 'Đang xử lý...' : 'Xử lý uploads'}
         </Button>
@@ -523,13 +591,29 @@ export default function ProductsPage() {
                       : '-'}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setEditingProduct(product)}
-                    >
-                      Chỉnh sửa
-                    </Button>
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setViewingProduct(product)}
+                      >
+                        Xem chi tiết
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingProduct(product)}
+                      >
+                        Chỉnh sửa
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeletingProduct(product)}
+                      >
+                        Xóa
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               )
@@ -601,7 +685,7 @@ export default function ProductsPage() {
               </Button>
             </div>
           </div>
-        </div>
+    </div>
       )}
 
       <ProductEditDialog
@@ -620,7 +704,159 @@ export default function ProductsPage() {
           mutateProducts()
         }}
       />
+      <ProductDetailDialog
+        product={viewingProduct}
+        open={Boolean(viewingProduct)}
+        onClose={() => setViewingProduct(null)}
+      />
+      <DeleteConfirmationDialog
+        product={deletingProduct}
+        open={Boolean(deletingProduct)}
+        onClose={() => setDeletingProduct(null)}
+        onConfirm={onDeleteProduct}
+        isDeleting={isDeleting}
+      />
+      <BulkDeleteConfirmationDialog
+        open={showBulkDeleteConfirm}
+        count={selected.length}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={onBulkDelete}
+        isDeleting={isBulkDeleting}
+      />
     </div>
+  )
+}
+
+function ProductDetailDialog({
+  product,
+  open,
+  onClose,
+}: {
+  product: Product | null
+  open: boolean
+  onClose: () => void
+}) {
+  if (!product) return null
+
+  const productImages = Array.isArray(product.images) ? product.images : []
+  const status = statusDisplay[product.status] ?? statusDisplay.DRAFT
+
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Chi tiết sản phẩm</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-6">
+          {/* Images */}
+          {productImages.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Hình ảnh</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {productImages.map((imgUrl, index) => (
+                  <div key={index} className="relative aspect-square rounded-md overflow-hidden border">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imgUrl}
+                      alt={`${product.title || 'Sản phẩm'} - ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = 'https://via.placeholder.com/300?text=Image+Error'
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Basic Info */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Tiêu đề</label>
+              <div className="text-sm">{product.title || 'Chưa có tiêu đề'}</div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Trạng thái</label>
+              <div>
+                <Badge variant={status.variant}>{status.label}</Badge>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Danh mục</label>
+              <div className="text-sm">{product.category || '-'}</div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Giá</label>
+              <div className="text-sm">
+                {product.price != null
+                  ? new Intl.NumberFormat('vi-VN').format(product.price) + (product.currency || '₫')
+                  : '-'}
+              </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium">Link nguồn</label>
+              <div className="text-sm">
+                <a
+                  href={product.sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-primary hover:underline break-all"
+                >
+                  {product.sourceUrl}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          {product.description && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Mô tả</label>
+              <div className="text-sm whitespace-pre-wrap border rounded-md p-3 bg-muted/50 max-h-60 overflow-y-auto">
+                {product.description}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata */}
+          <div className="grid gap-4 md:grid-cols-2 pt-4 border-t">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Ngày tạo</label>
+              <div className="text-sm">
+                {new Date(product.createdAt).toLocaleString('vi-VN', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
+            </div>
+            {product.updatedAt && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">Ngày cập nhật</label>
+                <div className="text-sm">
+                  {new Date(product.updatedAt).toLocaleString('vi-VN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Đóng
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -882,6 +1118,95 @@ function ProductCreateDialog({
   )
 }
 
+function DeleteConfirmationDialog({
+  product,
+  open,
+  onClose,
+  onConfirm,
+  isDeleting,
+}: {
+  product: Product | null
+  open: boolean
+  onClose: () => void
+  onConfirm: () => void
+  isDeleting: boolean
+}) {
+  if (!product) return null
+
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Xác nhận xóa sản phẩm</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Bạn có chắc chắn muốn xóa sản phẩm này? Hành động này không thể hoàn tác.
+          </p>
+        </DialogHeader>
+        <div className="py-4">
+          <div className="font-medium">{product.title || 'Chưa có tiêu đề'}</div>
+          {product.sourceUrl && (
+            <a
+              href={product.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              {product.sourceUrl}
+            </a>
+          )}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isDeleting}>
+            Huỷ
+          </Button>
+          <Button type="button" variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? 'Đang xóa...' : 'Xóa'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function BulkDeleteConfirmationDialog({
+  open,
+  count,
+  onClose,
+  onConfirm,
+  isDeleting,
+}: {
+  open: boolean
+  count: number
+  onClose: () => void
+  onConfirm: () => void
+  isDeleting: boolean
+}) {
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Xác nhận xóa nhiều sản phẩm</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Bạn có chắc chắn muốn xóa {count} sản phẩm đã chọn? Hành động này không thể hoàn tác.
+          </p>
+        </DialogHeader>
+        <div className="py-4">
+          <div className="text-sm">
+            Số lượng sản phẩm sẽ bị xóa: <span className="font-semibold">{count}</span>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="secondary" onClick={onClose} disabled={isDeleting}>
+            Huỷ
+          </Button>
+          <Button type="button" variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? 'Đang xóa...' : `Xóa ${count} sản phẩm`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function PaginationControls({
   pagination,
