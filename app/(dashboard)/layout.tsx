@@ -11,7 +11,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <nav className="grid gap-1">
           <Link href="/dashboard">Tổng quan</Link>
           <Link href="/dashboard/products">Sản phẩm</Link>
-          <Link href="/dashboard/settings">Cài đặt</Link>
+          <Link href="/dashboard/settings">Cài đặt WordPress</Link>
+          <Link href="/dashboard/user-settings">Cài đặt tài khoản</Link>
           <Link href="/dashboard/billing">Nạp tiền</Link>
           <Link href="/dashboard/billing/history">Lịch sử giao dịch</Link>
           {role === 'ADMIN' || role === 'MOD' ? <Link href="/admin">Admin</Link> : null}
