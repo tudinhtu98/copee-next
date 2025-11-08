@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import useSWR from 'swr'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -99,34 +100,113 @@ type ProductCreateFormValues = {
 }
 
 export default function ProductsPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const isInitializing = useRef(true)
+  const isUpdatingFromURL = useRef(false)
+
   const [page, setPage] = useState(1)
-  const [searchInput, setSearchInput] = useState('') // Input value for UI
-  const [search, setSearch] = useState('') // Debounced search for API
+  const [pageSize, setPageSize] = useState(20)
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>('')
   const [sortBy, setSortBy] = useState('createdAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
+  // Initialize from URL params on mount or when URL changes
+  useEffect(() => {
+    const nextPage = Number(searchParams.get('page')) || 1
+    const nextPerPage = Number(searchParams.get('perPage')) || Number(searchParams.get('limit')) || 20
+    const nextSearch = searchParams.get('search') || ''
+    const nextStatus = searchParams.get('status') || ''
+    const nextSortBy = searchParams.get('sortBy') || 'createdAt'
+    const nextSortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
+
+    // Check if values actually changed to avoid unnecessary updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (
+      page !== nextPage ||
+      pageSize !== nextPerPage ||
+      search !== nextSearch ||
+      status !== nextStatus ||
+      sortBy !== nextSortBy ||
+      sortOrder !== nextSortOrder
+    ) {
+      isUpdatingFromURL.current = true
+      setPage(nextPage)
+      setPageSize(nextPerPage)
+      setSearchInput(nextSearch)
+      setSearch(nextSearch)
+      setStatus(nextStatus)
+      setSortBy(nextSortBy)
+      setSortOrder(nextSortOrder)
+      // Reset flag after state updates
+      setTimeout(() => {
+        isUpdatingFromURL.current = false
+      }, 0)
+    }
+    isInitializing.current = false
+    // Only depend on searchParams to avoid infinite loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
   // Debounce search input: update search state after 300ms
   useEffect(() => {
+    // Don't reset page if we're updating from URL
+    if (isUpdatingFromURL.current) return
+    
     const timer = setTimeout(() => {
       setSearch(searchInput)
-      setPage(1) // Reset to page 1 when search changes
+      // Only reset to page 1 if search actually changed (not from URL)
+      if (search !== searchInput) {
+        setPage(1)
+      }
     }, 300)
     return () => clearTimeout(timer)
-  }, [searchInput])
+  }, [searchInput, search])
+
+  // Update URL when state changes (but not when initializing from URL)
+  useEffect(() => {
+    // Skip URL update during initialization or when updating from URL
+    if (isInitializing.current || isUpdatingFromURL.current) {
+      return
+    }
+
+    const params = new URLSearchParams()
+    if (page > 1) params.set('page', String(page))
+    if (pageSize !== 20) params.set('perPage', String(pageSize))
+    if (search) params.set('search', search)
+    if (status) params.set('status', status)
+    if (sortBy !== 'createdAt') params.set('sortBy', sortBy)
+    if (sortOrder !== 'desc') params.set('sortOrder', sortOrder)
+
+    const query = params.toString()
+    const newUrl = query ? `${pathname}?${query}` : pathname
+    
+    // Compare with current URL params
+    const currentParams = new URLSearchParams(searchParams.toString())
+    const currentQuery = currentParams.toString()
+    const currentUrl = currentQuery ? `${pathname}?${currentQuery}` : pathname
+    
+    // Only update URL if it's different from current URL
+    if (newUrl !== currentUrl) {
+      router.replace(newUrl, { scroll: false })
+    }
+  }, [page, pageSize, search, status, sortBy, sortOrder, pathname, router, searchParams])
 
   // Create query params with useMemo to prevent re-render loop
   const queryParams = useMemo(() => {
     const params = new URLSearchParams({
       page: String(page),
-      limit: '20',
+      limit: String(pageSize),
       ...(search && { search }),
       ...(status && { status }),
       sortBy,
       sortOrder,
     })
     return params.toString()
-  }, [page, search, status, sortBy, sortOrder])
+  }, [page, pageSize, search, status, sortBy, sortOrder])
 
   const {
     data: productsData,
@@ -151,15 +231,10 @@ export default function ProductsPage() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
-  // Clean up selected items when products change (remove deleted products from selection)
-  // TEMPORARILY DISABLED TO PREVENT INFINITE LOOP
-  // useEffect(() => {
-  //   const currentProductIds = products.map(p => p.id)
-  //   setSelected((prev) => {
-  //     const filtered = prev.filter((id) => currentProductIds.includes(id))
-  //     return filtered
-  //   })
-  // }, [productsData?.items])
+  useEffect(() => {
+    const currentProductIds = products.map((p) => p.id)
+    setSelected((prev) => prev.filter((id) => currentProductIds.includes(id)))
+  }, [productsData?.items])
 
   const allSelected = useMemo(() => {
     if (!products || products.length === 0) return false
@@ -367,6 +442,17 @@ export default function ProductsPage() {
         )}
       </div>
 
+      <PaginationControls
+        pagination={pagination}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size)
+          setPage(1)
+        }}
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
@@ -453,50 +539,67 @@ export default function ProductsPage() {
       </div>
 
       {/* Pagination */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+      {pagination && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-muted-foreground">
             Hiển thị {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} / {pagination.total}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page - 1)}
-              disabled={page === 1}
-            >
-              Trước
-            </Button>
-            {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-              let pageNum;
-              if (pagination.totalPages <= 5) {
-                pageNum = i + 1;
-              } else if (page <= 3) {
-                pageNum = i + 1;
-              } else if (page >= pagination.totalPages - 2) {
-                pageNum = pagination.totalPages - 4 + i;
-              } else {
-                pageNum = page - 2 + i;
-              }
-              return (
-                <Button
-                  key={pageNum}
-                  variant={page === pageNum ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setPage(pageNum)}
-                >
-                  {pageNum}
-                </Button>
-              );
-            })}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(page + 1)}
-              disabled={page === pagination.totalPages}
-            >
-              Sau
-            </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm text-muted-foreground">
+              Trang size:
+              <select
+                className="ml-2 rounded-md border border-input bg-background px-2 py-1 text-sm"
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value))
+                  setPage(1)
+                }}
+              >
+                {[10, 20, 50].map((size) => (
+                  <option key={size} value={size}>{size}</option>
+                ))}
+              </select>
+            </label>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                disabled={page === 1}
+              >
+                Trước
+              </Button>
+              {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                let pageNum
+                if (pagination.totalPages <= 5) {
+                  pageNum = i + 1
+                } else if (page <= 3) {
+                  pageNum = i + 1
+                } else if (page >= pagination.totalPages - 2) {
+                  pageNum = pagination.totalPages - 4 + i
+                } else {
+                  pageNum = page - 2 + i
+                }
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={page === pageNum ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setPage(pageNum)}
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((prev) => Math.min(pagination.totalPages, prev + 1))}
+                disabled={page === pagination.totalPages}
+              >
+                Sau
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -776,5 +879,95 @@ function ProductCreateDialog({
         </form>
       </DialogContent>
     </Dialog>
+  )
+}
+
+
+function PaginationControls({
+  pagination,
+  page,
+  pageSize,
+  onPageChange,
+  onPageSizeChange,
+}: {
+  pagination?: { page: number; limit: number; total: number; totalPages: number }
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
+}) {
+  if (!pagination) return null
+
+  const totalPages = pagination.totalPages
+
+  const getPageNumbers = () => {
+    const visible = Math.min(5, totalPages)
+    const pages: number[] = []
+    for (let i = 0; i < visible; i++) {
+      let pageNum: number
+      if (totalPages <= 5) {
+        pageNum = i + 1
+      } else if (page <= 3) {
+        pageNum = i + 1
+      } else if (page >= totalPages - 2) {
+        pageNum = totalPages - 4 + i
+      } else {
+        pageNum = page - 2 + i
+      }
+      pages.push(pageNum)
+    }
+    return pages
+  }
+
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="text-sm text-muted-foreground">
+        Hiển thị {(pagination.page - 1) * pagination.limit + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} / {pagination.total}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-sm text-muted-foreground">
+          Trang size:
+          <select
+            className="ml-2 rounded-md border border-input bg-background px-2 py-1 text-sm"
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          >
+            {[10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+            disabled={page === 1}
+          >
+            Trước
+          </Button>
+          {getPageNumbers().map((pageNum) => (
+            <Button
+              key={pageNum}
+              variant={page === pageNum ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onPageChange(pageNum)}
+            >
+              {pageNum}
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+            disabled={page === totalPages}
+          >
+            Sau
+          </Button>
+        </div>
+      </div>
+    </div>
   )
 }
