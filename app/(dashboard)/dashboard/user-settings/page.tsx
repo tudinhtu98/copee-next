@@ -1,25 +1,25 @@
-"use client"
+"use client";
 
-import { useSession } from 'next-auth/react'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useSession } from "next-auth/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function UserSettingsPage() {
-  const { data: session } = useSession() as any
-  const [copied, setCopied] = useState(false)
+  const { data: session } = useSession() as any;
+  const [copied, setCopied] = useState(false);
 
-  const token = session?.accessToken || ''
+  const token = session?.accessToken || "";
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(token)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(token);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      alert('Không thể copy. Vui lòng chọn và copy thủ công.')
+      alert("Không thể copy. Vui lòng chọn và copy thủ công.");
     }
-  }
+  };
 
   return (
     <div className="space-y-4">
@@ -37,13 +37,9 @@ export default function UserSettingsPage() {
         </p>
 
         <div className="flex gap-2">
-          <Input
-            value={token}
-            readOnly
-            className="font-mono text-sm"
-          />
+          <Input value={token} readOnly className="font-mono text-sm" />
           <Button onClick={copyToClipboard} variant="outline">
-            {copied ? '✓ Đã copy' : 'Copy'}
+            {copied ? "✓ Đã copy" : "Copy"}
           </Button>
         </div>
 
@@ -54,7 +50,12 @@ export default function UserSettingsPage() {
             <li>Mở Chrome extension Copee</li>
             <li>Click "Settings" trong popup</li>
             <li>Paste token vào ô "Auth Token"</li>
-            <li>Điền API Endpoint: <code className="bg-white px-1 rounded">http://localhost:3000</code></li>
+            <li>
+              Điền API Endpoint:{" "}
+              <code className="bg-white px-1 rounded">
+                http://localhost:3000
+              </code>
+            </li>
             <li>Click "Save Settings"</li>
           </ol>
         </div>
@@ -65,18 +66,18 @@ export default function UserSettingsPage() {
         <div className="space-y-2">
           <div>
             <label className="text-sm text-muted-foreground">Email</label>
-            <div className="font-medium">{session?.user?.email || '-'}</div>
+            <div className="font-medium">{session?.user?.email || "-"}</div>
           </div>
           <div>
             <label className="text-sm text-muted-foreground">Username</label>
-            <div className="font-medium">{session?.user?.username || '-'}</div>
+            <div className="font-medium">{session?.user?.username || "-"}</div>
           </div>
           <div>
             <label className="text-sm text-muted-foreground">Vai trò</label>
-            <div className="font-medium">{session?.user?.role || '-'}</div>
+            <div className="font-medium">{session?.user?.role || "-"}</div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

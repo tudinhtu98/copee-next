@@ -1,9 +1,13 @@
-import Link from 'next/link'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '../api/auth/[...nextauth]/route'
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await getServerSession(authOptions as any) as any
-  const role = session?.user?.role
+import Link from "next/link";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = (await getServerSession(authOptions as any)) as any;
+  const role = session?.user?.role;
   return (
     <div className="flex min-h-dvh">
       <aside className="w-64 shrink-0 border-r p-4 space-y-2">
@@ -15,10 +19,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <Link href="/dashboard/user-settings">Cài đặt tài khoản</Link>
           <Link href="/dashboard/billing">Nạp tiền</Link>
           <Link href="/dashboard/billing/history">Lịch sử giao dịch</Link>
-          {role === 'ADMIN' || role === 'MOD' ? <Link href="/admin">Admin</Link> : null}
+          {role === "ADMIN" || role === "MOD" ? (
+            <Link href="/admin">Admin</Link>
+          ) : null}
         </nav>
       </aside>
       <main className="flex-1 p-6">{children}</main>
     </div>
-  )
+  );
 }

@@ -1,5 +1,9 @@
-import Link from 'next/link'
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+import Link from "next/link";
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex min-h-dvh">
       <aside className="w-64 shrink-0 border-r p-4 space-y-2">
@@ -13,5 +17,5 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
       <main className="flex-1 p-6">{children}</main>
     </div>
-  )
+  );
 }
