@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -59,7 +60,7 @@ export default function CategoriesPage() {
 
   async function onSyncCategories() {
     if (!selectedSiteId) {
-      alert('Vui lòng chọn site trước')
+      toast.warning('Vui lòng chọn site trước')
       return
     }
 
@@ -75,10 +76,10 @@ export default function CategoriesPage() {
       }
 
       const data = await res.json()
-      alert(data.message || `Đã sync ${data.count} categories`)
+      toast.success(data.message || `Đã sync ${data.count} categories`)
       mutateCategories()
     } catch (e: any) {
-      alert(e.message || 'Lỗi sync categories')
+      toast.error(e.message || 'Lỗi sync categories')
     } finally {
       setIsSyncing(false)
     }

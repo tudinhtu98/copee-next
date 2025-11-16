@@ -120,3 +120,31 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Sonner toast custom colors */
+.sonner-success,
+[data-sonner-toast][data-type="success"],
+[data-sonner-toast].success {
+  background-color: #dcfce7 !important;
+  border-color: #86efac !important;
+  color: #166534 !important;
+}
+
+.sonner-error,
+[data-sonner-toast][data-type="error"],
+[data-sonner-toast].error {
+  background-color: #fef2f2 !important;
+  border-color: #fca5a5 !important;
+  color: #991b1b !important;
+}
+
+/* Target inner content */
+.sonner-success [data-content],
+[data-sonner-toast][data-type="success"] [data-content] {
+  color: #166534 !important;
+}
+
+.sonner-error [data-content],
+[data-sonner-toast][data-type="error"] [data-content] {
+  color: #991b1b !important;
+}

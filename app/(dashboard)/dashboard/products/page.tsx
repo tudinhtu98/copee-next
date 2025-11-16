@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -315,10 +316,10 @@ export default function ProductsPage() {
         throw new Error(data.message || "Không thể xử lý uploads");
       }
       const data = (await res.json()) as ProcessResponse;
-      alert(`Đã xử lý ${data.processed} sản phẩm, thành công ${data.success}`);
+      toast.success(`Đã xử lý ${data.processed} sản phẩm, thành công ${data.success}`);
       mutateProducts();
     } catch (e: any) {
-      alert(e.message || "Không thể xử lý uploads");
+      toast.error(e.message || "Không thể xử lý uploads");
     } finally {
       setIsProcessing(false);
     }
@@ -338,13 +339,13 @@ export default function ProductsPage() {
           .catch(() => ({ message: "Không thể xóa sản phẩm" }));
         throw new Error(data.message || "Không thể xóa sản phẩm");
       }
-      alert("Đã xóa sản phẩm");
+      toast.success("Đã xóa sản phẩm");
       setDeletingProduct(null);
       mutateProducts();
       // Remove from selected if it was selected
       setSelected((prev) => prev.filter((id) => id !== deletingProduct.id));
     } catch (e: any) {
-      alert(e.message || "Không thể xóa sản phẩm");
+      toast.error(e.message || "Không thể xóa sản phẩm");
     } finally {
       setIsDeleting(false);
     }
@@ -352,7 +353,7 @@ export default function ProductsPage() {
 
   async function onBulkDelete() {
     if (selected.length === 0) {
-      alert("Vui lòng chọn ít nhất một sản phẩm để xóa");
+      toast.warning("Vui lòng chọn ít nhất một sản phẩm để xóa");
       return;
     }
 
@@ -370,12 +371,12 @@ export default function ProductsPage() {
         throw new Error(data.message || "Không thể xóa sản phẩm");
       }
       const data = await res.json();
-      alert(data.message || `Đã xóa ${selected.length} sản phẩm`);
+      toast.success(data.message || `Đã xóa ${selected.length} sản phẩm`);
       setSelected([]);
       setShowBulkDeleteConfirm(false);
       mutateProducts();
     } catch (e: any) {
-      alert(e.message || "Không thể xóa sản phẩm");
+      toast.error(e.message || "Không thể xóa sản phẩm");
     } finally {
       setIsBulkDeleting(false);
     }
@@ -453,7 +454,7 @@ export default function ProductsPage() {
         <Button
           onClick={() => {
             if (selected.length === 0) {
-              alert("Vui lòng chọn ít nhất một sản phẩm");
+              toast.warning("Vui lòng chọn ít nhất một sản phẩm");
               return;
             }
             setShowUploadDialog(true);
@@ -909,7 +910,7 @@ function ProductEditDialog({
       if (priceValue) {
         const parsed = Number(priceValue);
         if (Number.isNaN(parsed)) {
-          alert("Giá không hợp lệ");
+          toast.error("Giá không hợp lệ");
           return;
         }
         payload.price = parsed;
@@ -928,10 +929,10 @@ function ProductEditDialog({
           .catch(() => ({ message: "Không thể cập nhật sản phẩm" }));
         throw new Error(data.message || "Không thể cập nhật sản phẩm");
       }
-      alert("Đã cập nhật sản phẩm");
+      toast.success("Đã cập nhật sản phẩm");
       onSaved();
     } catch (e: any) {
-      alert(e.message || "Không thể cập nhật sản phẩm");
+      toast.error(e.message || "Không thể cập nhật sản phẩm");
     }
   });
 
@@ -1032,7 +1033,7 @@ function ProductCreateDialog({
       };
 
       if (!payload.sourceUrl) {
-        alert("Vui lòng nhập link sản phẩm Shopee");
+        toast.warning("Vui lòng nhập link sản phẩm Shopee");
         return;
       }
 
@@ -1049,7 +1050,7 @@ function ProductCreateDialog({
       if (values.price.trim()) {
         const parsed = Number(values.price);
         if (Number.isNaN(parsed)) {
-          alert("Giá không hợp lệ");
+          toast.error("Giá không hợp lệ");
           return;
         }
         payload.price = parsed;
@@ -1066,11 +1067,11 @@ function ProductCreateDialog({
           .catch(() => ({ message: "Không thể thêm sản phẩm" }));
         throw new Error(data.message || "Không thể thêm sản phẩm");
       }
-      alert("Đã thêm sản phẩm từ Shopee");
+      toast.success("Đã thêm sản phẩm từ Shopee");
       onCreated();
       onOpenChange(false);
     } catch (e: any) {
-      alert(e.message || "Không thể thêm sản phẩm");
+      toast.error(e.message || "Không thể thêm sản phẩm");
     }
   });
 
@@ -1289,7 +1290,7 @@ function UploadDialog({
       const data = await res.json();
       setCategories(data);
     } catch (error: any) {
-      alert(error.message || "Không thể tải categories");
+      toast.error(error.message || "Không thể tải categories");
     } finally {
       setIsLoadingCategories(false);
     }
@@ -1391,7 +1392,7 @@ function UploadDialog({
 
   async function syncCategories() {
     if (!selectedSiteId) {
-      alert("Vui lòng chọn site trước");
+      toast.warning("Vui lòng chọn site trước");
       return;
     }
     try {
@@ -1405,10 +1406,10 @@ function UploadDialog({
         throw new Error(data.message || "Lỗi sync");
       }
       const data = await res.json();
-      alert(data.message || `Đã sync ${data.count} categories`);
+      toast.success(data.message || `Đã sync ${data.count} categories`);
       loadCategories();
     } catch (e: any) {
-      alert(e.message || "Lỗi sync categories");
+      toast.error(e.message || "Lỗi sync categories");
     } finally {
       setIsSyncing(false);
     }
@@ -1416,12 +1417,12 @@ function UploadDialog({
 
   async function createCategory(productId: string) {
     if (!selectedSiteId) {
-      alert("Vui lòng chọn site trước");
+      toast.warning("Vui lòng chọn site trước");
       return;
     }
     const categoryName = newCategoryName[productId]?.trim();
     if (!categoryName) {
-      alert("Vui lòng nhập tên category");
+      toast.warning("Vui lòng nhập tên category");
       return;
     }
 
@@ -1449,9 +1450,9 @@ function UploadDialog({
         delete next[productId];
         return next;
       });
-      alert("Đã tạo category thành công");
+      toast.success("Đã tạo category thành công");
     } catch (e: any) {
-      alert(e.message || "Lỗi tạo category");
+      toast.error(e.message || "Lỗi tạo category");
     } finally {
       setIsCreatingCategory((prev) => {
         const next = { ...prev };
@@ -1463,7 +1464,7 @@ function UploadDialog({
 
   async function handleUpload() {
     if (!selectedSiteId) {
-      alert("Vui lòng chọn site đích");
+      toast.warning("Vui lòng chọn site đích");
       return;
     }
 
@@ -1472,7 +1473,7 @@ function UploadDialog({
       (p) => !productCategories[p.id]
     );
     if (productsWithoutCategory.length > 0) {
-      alert(
+      toast.warning(
         `Vui lòng chọn category cho tất cả sản phẩm. Còn ${productsWithoutCategory.length} sản phẩm chưa có category.`
       );
       return;
@@ -1508,10 +1509,10 @@ function UploadDialog({
       }
 
       const successCount = results.length;
-      alert(`Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Upload Jobs để xử lý.`);
+      toast.success(`Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Upload Jobs để xử lý.`);
       onUploadSuccess();
     } catch (e: any) {
-      alert(e.message || "Lỗi khi upload");
+      toast.error(e.message || "Lỗi khi upload");
     } finally {
       setIsUploading(false);
     }

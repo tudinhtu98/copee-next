@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 
 export default function UserSettingsPage() {
@@ -17,7 +18,7 @@ export default function UserSettingsPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      alert("Không thể copy. Vui lòng chọn và copy thủ công.");
+      toast.error("Không thể copy. Vui lòng chọn và copy thủ công.");
     }
   };
 

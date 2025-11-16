@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -81,7 +82,7 @@ export function CategoryMappingsDialog({
   async function onSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.sourceName || !form.wooCategoryId) {
-      alert("Vui lòng điền đầy đủ thông tin");
+      toast.warning("Vui lòng điền đầy đủ thông tin");
       return;
     }
 
@@ -98,11 +99,11 @@ export function CategoryMappingsDialog({
         throw new Error(data.message || "Lỗi lưu");
       }
 
-      alert("Đã thêm category mapping");
+      toast.success("Đã thêm category mapping");
       setForm({ sourceName: "", wooCategoryId: "" });
       mutate();
     } catch (e: any) {
-      alert(e.message || "Lỗi lưu");
+      toast.error(e.message || "Lỗi lưu");
     } finally {
       setIsSaving(false);
     }
@@ -121,10 +122,10 @@ export function CategoryMappingsDialog({
       }
 
       const data = await res.json();
-      alert(data.message || `Đã sync ${data.count} categories`);
+      toast.success(data.message || `Đã sync ${data.count} categories`);
       mutateCategories();
     } catch (e: any) {
-      alert(e.message || "Lỗi sync categories");
+      toast.error(e.message || "Lỗi sync categories");
     } finally {
       setIsSyncing(false);
     }
@@ -157,7 +158,7 @@ export function CategoryMappingsDialog({
 
       mutate();
     } catch (e: any) {
-      alert(e.message || "Không thể xoá");
+      toast.error(e.message || "Không thể xoá");
     }
   }
 

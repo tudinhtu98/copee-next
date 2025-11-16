@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch('/api/proxy' + url, { cache: 'no-store' })
@@ -50,10 +51,10 @@ export default function BillingPage() {
         const data = await res.json().catch(() => ({ message: 'Lỗi' }))
         throw new Error(data.message || 'Không thể nạp tiền')
       }
-      alert('Đã nạp 100.000đ')
+      toast.success('Đã nạp 100.000đ')
       mutateBalance()
     } catch (e: any) {
-      alert(e.message || 'Không thể nạp tiền')
+      toast.error(e.message || 'Không thể nạp tiền')
     } finally {
       setIsLoading(false)
     }

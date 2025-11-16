@@ -4,6 +4,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -36,7 +37,7 @@ export default function LoginPage() {
       if (r?.error) throw new Error(r.error);
       window.location.href = next;
     } catch (e) {
-      alert((e as any).message);
+      toast.error((e as any).message);
     }
   });
   return (

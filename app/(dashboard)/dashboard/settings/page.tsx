@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { FormEvent, useState } from "react";
 import useSWR from "swr";
 import { CategoryMappingsDialog } from "@/components/category-mappings-dialog";
+import { toast } from "sonner";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
   const res = await fetch("/api/proxy" + url, { cache: "no-store" });
@@ -51,9 +52,9 @@ export default function SettingsPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: "Lỗi lưu" }));
-        return alert(data.message || "Lỗi lưu");
+        return toast.error(data.message || "Lỗi lưu");
       }
-      alert("Đã lưu site mới");
+      toast.success("Đã lưu site mới");
       setForm({
         name: "",
         baseUrl: "",
@@ -77,7 +78,7 @@ export default function SettingsPage() {
       }
       mutate();
     } catch (e: any) {
-      alert(e.message || "Không thể xoá site");
+      toast.error(e.message || "Không thể xoá site");
     }
   }
   return (

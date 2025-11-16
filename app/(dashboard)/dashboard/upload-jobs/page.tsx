@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 import useSWR from "swr";
 
 type UploadJob = {
@@ -99,7 +100,7 @@ export default function UploadJobsPage() {
     const message = jobIds 
       ? `Bạn có chắc muốn xử lý ${jobIds.length} job đã chọn?`
       : `Bạn có chắc muốn xử lý tất cả jobs PENDING/FAILED?`;
-    const confirmed = confirm(message);
+    const confirmed = window.confirm(message);
     if (!confirmed) return;
 
     try {
@@ -137,7 +138,7 @@ export default function UploadJobsPage() {
           iterations++;
         }
 
-        alert(
+        toast.success(
           `Đã xử lý ${totalProcessed} job (${totalSuccess} thành công)`
         );
       } else {
@@ -156,7 +157,7 @@ export default function UploadJobsPage() {
         }
 
         const result = await res.json();
-        alert(
+        toast.success(
           `Đã xử lý ${result.processed || 0} job (${result.success || 0} thành công)`
         );
       }
@@ -164,7 +165,7 @@ export default function UploadJobsPage() {
       setSelectedJobs(new Set());
       mutate(); // Refresh data
     } catch (e: any) {
-      alert(e.message || "Lỗi khi xử lý upload");
+      toast.error(e.message || "Lỗi khi xử lý upload");
     } finally {
       setIsProcessing(false);
     }
@@ -177,7 +178,7 @@ export default function UploadJobsPage() {
     const message = jobIds 
       ? `Bạn có chắc muốn hủy ${jobIds.length} job đã chọn?`
       : `Bạn có chắc muốn hủy tất cả jobs FAILED?`;
-    const confirmed = confirm(message);
+    const confirmed = window.confirm(message);
     if (!confirmed) return;
 
     try {
@@ -196,11 +197,11 @@ export default function UploadJobsPage() {
       }
 
       const result = await res.json();
-      alert(`Đã hủy ${result.cancelled || 0} job`);
+      toast.success(`Đã hủy ${result.cancelled || 0} job`);
       setSelectedJobs(new Set());
       mutate(); // Refresh data
     } catch (e: any) {
-      alert(e.message || "Lỗi khi hủy job");
+      toast.error(e.message || "Lỗi khi hủy job");
     } finally {
       setIsCancelling(false);
     }
