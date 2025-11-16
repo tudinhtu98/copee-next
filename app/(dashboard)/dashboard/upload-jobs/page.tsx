@@ -141,7 +141,7 @@ export default function UploadJobsPage() {
           }
 
           const result = await res.json();
-          const processedCount = result.processed || 0;
+          const processedCount = result.processed || result.queued || 0;
           const successCount = result.success || 0;
 
           totalProcessed += processedCount;
@@ -170,7 +170,7 @@ export default function UploadJobsPage() {
 
         const result = await res.json();
         toast.success(
-          `Đã xử lý ${result.processed || 0} job (${result.success || 0} thành công)`
+          `Đã thêm ${result.processed || result.queued || 0} job vào queue để xử lý song song`
         );
       }
 
