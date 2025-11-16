@@ -87,10 +87,10 @@ export default function UploadJobsPage() {
   }, []);
 
   const handleSelectAll = useCallback((checked: boolean) => {
-    // Only select PENDING jobs
-    const pendingJobs = jobs.filter((job) => job.status === "PENDING");
+    // Select both PENDING and FAILED jobs
+    const selectableJobs = jobs.filter((job) => job.status === "PENDING" || job.status === "FAILED");
     if (checked) {
-      setSelectedJobs(new Set(pendingJobs.map((job) => job.id)));
+      setSelectedJobs(new Set(selectableJobs.map((job) => job.id)));
     } else {
       setSelectedJobs(new Set());
     }
@@ -269,9 +269,9 @@ export default function UploadJobsPage() {
   };
 
   const allSelected = useMemo(() => {
-    // Only check if all PENDING jobs are selected
-    const pendingJobs = jobs.filter((job) => job.status === "PENDING");
-    return pendingJobs.length > 0 && pendingJobs.every((job) => selectedJobs.has(job.id));
+    // Check if all PENDING and FAILED jobs are selected
+    const selectableJobs = jobs.filter((job) => job.status === "PENDING" || job.status === "FAILED");
+    return selectableJobs.length > 0 && selectableJobs.every((job) => selectedJobs.has(job.id));
   }, [jobs, selectedJobs]);
 
 
@@ -305,7 +305,7 @@ export default function UploadJobsPage() {
               ? "Đang xử lý..." 
               : selectedJobs.size > 0 
                 ? `Xử lý ${selectedJobs.size} job đã chọn`
-                : "Xử lý tất cả PENDING"}
+                : "Xử lý tất cả PENDING/FAILED"}
           </Button>
         </div>
       </div>
