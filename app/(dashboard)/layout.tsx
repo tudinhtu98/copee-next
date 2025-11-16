@@ -15,6 +15,7 @@ export default async function DashboardLayout({
         <nav className="grid gap-1">
           <Link href="/dashboard">Tổng quan</Link>
           <Link href="/dashboard/products">Sản phẩm</Link>
+          <Link href="/dashboard/categories">Danh mục</Link>
           <Link href="/dashboard/settings">Cài đặt WordPress</Link>
           <Link href="/dashboard/user-settings">Cài đặt tài khoản</Link>
           <Link href="/dashboard/billing">Nạp tiền</Link>

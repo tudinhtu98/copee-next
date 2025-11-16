@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +35,15 @@ type CategoryMapping = {
   createdAt: string;
 };
 
+type WooCommerceCategory = {
+  id: string;
+  wooId: string;
+  name: string;
+  slug: string | null;
+  parentId: string | null;
+  count: number;
+};
+
 type CategoryMappingsDialogProps = {
   siteId: string;
   siteName: string;
@@ -47,10 +56,10 @@ export function CategoryMappingsDialog({
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     sourceName: "",
-    targetId: "",
-    targetName: "",
+    wooCategoryId: "",
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const {
     data: mappings,
@@ -61,9 +70,17 @@ export function CategoryMappingsDialog({
     fetcher
   );
 
+  const {
+    data: wooCategories,
+    mutate: mutateCategories,
+  } = useSWR<WooCommerceCategory[]>(
+    open ? `/sites/${siteId}/categories` : null,
+    fetcher
+  );
+
   async function onSave(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!form.sourceName || !form.targetId || !form.targetName) {
+    if (!form.sourceName || !form.wooCategoryId) {
       alert("Vui lòng điền đầy đủ thông tin");
       return;
     }
@@ -82,13 +99,42 @@ export function CategoryMappingsDialog({
       }
 
       alert("Đã thêm category mapping");
-      setForm({ sourceName: "", targetId: "", targetName: "" });
+      setForm({ sourceName: "", wooCategoryId: "" });
       mutate();
     } catch (e: any) {
       alert(e.message || "Lỗi lưu");
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function onSyncCategories() {
+    try {
+      setIsSyncing(true);
+      const res = await fetch(`/api/proxy/sites/${siteId}/categories/sync`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: "Lỗi sync" }));
+        throw new Error(data.message || "Lỗi sync");
+      }
+
+      const data = await res.json();
+      alert(data.message || `Đã sync ${data.count} categories`);
+      mutateCategories();
+    } catch (e: any) {
+      alert(e.message || "Lỗi sync categories");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  function onSelectWooCategory(wooCategoryId: string) {
+    setForm((prev) => ({
+      ...prev,
+      wooCategoryId: wooCategoryId,
+    }));
   }
 
   async function onDelete(mappingId: string) {
@@ -128,6 +174,27 @@ export function CategoryMappingsDialog({
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Sync Categories Button */}
+          <div className="flex items-center justify-between border-b pb-3">
+            <div>
+              <p className="text-sm text-muted-foreground">
+                Sync categories từ WooCommerce để có danh sách đầy đủ
+              </p>
+              {wooCategories && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Đã sync: {wooCategories.length} categories
+                </p>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onSyncCategories}
+              disabled={isSyncing}
+            >
+              {isSyncing ? "Đang sync..." : "Sync Categories"}
+            </Button>
+          </div>
           <form className="grid gap-3" onSubmit={onSave}>
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">
@@ -143,27 +210,28 @@ export function CategoryMappingsDialog({
             </div>
             <div className="grid gap-1.5">
               <label className="text-sm font-medium">
-                WooCommerce Category ID
+                WooCommerce Category
               </label>
-              <Input
-                placeholder="Ví dụ: 123"
-                value={form.targetId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, targetId: e.target.value }))
-                }
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <label className="text-sm font-medium">
-                WooCommerce Category Name
-              </label>
-              <Input
-                placeholder="Ví dụ: Women's Fashion"
-                value={form.targetName}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, targetName: e.target.value }))
-                }
-              />
+              {wooCategories && wooCategories.length > 0 ? (
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={form.wooCategoryId}
+                  onChange={(e) => onSelectWooCategory(e.target.value)}
+                >
+                  <option value="">Chọn category...</option>
+                  {wooCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name} (ID: {cat.wooId})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Chưa có categories. Click &quot;Sync Categories&quot; để tải từ WooCommerce
+                  </p>
+                </div>
+              )}
             </div>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? "Đang thêm..." : "Thêm mapping"}
