@@ -80,10 +80,6 @@ type Site = {
   baseUrl: string;
 };
 
-type UploadJobResponse = {
-  queued: number;
-};
-
 type ProcessResponse = {
   processed: number;
   success: number;
@@ -249,9 +245,6 @@ export default function ProductsPage() {
   const pagination = productsData?.pagination;
 
   const [selected, setSelected] = useState<string[]>([]);
-  const [siteId, setSiteId] = useState("");
-  const [targetCategory, setTargetCategory] = useState("");
-  const [isCreatingJob, setIsCreatingJob] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -260,6 +253,7 @@ export default function ProductsPage() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   useEffect(() => {
     const currentProductIds = products.map((p) => p.id);
@@ -288,8 +282,6 @@ export default function ProductsPage() {
     );
   };
 
-  const selectedSite = sites?.find((site) => site.id === siteId);
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value); // Update input value immediately
   };
@@ -309,46 +301,6 @@ export default function ProductsPage() {
     setPage(1);
   };
 
-  const handleSiteChange = useCallback((value: string) => {
-    setSiteId(value);
-  }, []);
-
-  async function onBulk() {
-    if (selected.length === 0) {
-      alert("Vui lòng chọn ít nhất một sản phẩm");
-      return;
-    }
-    if (!siteId) {
-      alert("Vui lòng chọn site để upload");
-      return;
-    }
-
-    try {
-      setIsCreatingJob(true);
-      const res = await fetch("/api/proxy/products/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productIds: selected,
-          siteId,
-          targetCategory: targetCategory || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res
-          .json()
-          .catch(() => ({ message: "Không thể tạo job" }));
-        throw new Error(data.message || "Không thể tạo job");
-      }
-      const data = (await res.json()) as UploadJobResponse;
-      alert(`Đã tạo ${data.queued} job upload`);
-      setSelected([]);
-    } catch (e: any) {
-      alert(e.message || "Không thể tạo job");
-    } finally {
-      setIsCreatingJob(false);
-    }
-  }
 
   async function onProcessUploads() {
     try {
@@ -432,11 +384,11 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-2xl font-semibold">Sản phẩm</h1>
+    <h1 className="text-2xl font-semibold">Sản phẩm</h1>
         <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
           Thêm sản phẩm
         </Button>
-      </div>
+    </div>
       <p className="text-sm text-muted-foreground">
         Chọn sản phẩm, cấu hình site và tạo job upload lên WooCommerce.
       </p>
@@ -483,71 +435,42 @@ export default function ProductsPage() {
         </select>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-[minmax(200px,_260px)_minmax(200px,_1fr)_auto] sm:items-end">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Site đích</span>
-          <select
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-            value={siteId}
-            onChange={(e) => handleSiteChange(e.target.value)}
-          >
-            <option value="">
-              {sites?.length ? "Chọn site" : "Chưa có site"}
-            </option>
-            {sites?.map((site) => (
-              <option key={site.id} value={site.id}>
-                {site.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Danh mục mục tiêu</span>
-          <Input
-            value={targetCategory}
-            onChange={(event) => setTargetCategory(event.target.value)}
-            placeholder="Ví dụ: Thời trang nữ"
-          />
-        </div>
-
-        <div className="flex gap-2 sm:justify-end">
-          <Button
-            variant="secondary"
-            onClick={toggleSelectAll}
-            disabled={!products || products.length === 0}
-          >
-            {allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={() => setShowBulkDeleteConfirm(true)}
-            disabled={selected.length === 0}
-          >
-            Xóa đã chọn ({selected.length})
-          </Button>
-          <Button
-            onClick={onBulk}
-            disabled={isCreatingJob || selected.length === 0}
-          >
-            {isCreatingJob ? "Đang tạo..." : "Tạo job upload"}
-          </Button>
-        </div>
+      <div className="flex gap-2 sm:justify-end">
+        <Button
+          variant="secondary"
+          onClick={toggleSelectAll}
+          disabled={!products || products.length === 0}
+        >
+          {allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+        </Button>
+        <Button
+          variant="destructive"
+          onClick={() => setShowBulkDeleteConfirm(true)}
+          disabled={selected.length === 0}
+        >
+          Xóa đã chọn ({selected.length})
+        </Button>
+        <Button
+          onClick={() => {
+            if (selected.length === 0) {
+              alert("Vui lòng chọn ít nhất một sản phẩm");
+              return;
+            }
+            setShowUploadDialog(true);
+          }}
+          disabled={selected.length === 0}
+        >
+          Upload ({selected.length})
+        </Button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <Button onClick={onProcessUploads} disabled={isProcessing}>
-          {isProcessing ? "Đang xử lý..." : "Xử lý uploads"}
-        </Button>
+    <div className="flex items-center gap-2">
         {selectedCount > 0 && (
           <span className="text-sm text-muted-foreground">
             Đã chọn {selectedCount} sản phẩm
           </span>
         )}
-        {selectedSite && (
-          <Badge variant="secondary">Site: {selectedSite.name}</Badge>
-        )}
-      </div>
+    </div>
 
       <PaginationControls
         pagination={pagination}
@@ -618,7 +541,7 @@ export default function ProductsPage() {
                   <TableCell className="max-w-xs">
                     <div className="font-medium line-clamp-2">
                       {product.title || "Chưa có tiêu đề"}
-                    </div>
+    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
@@ -771,6 +694,17 @@ export default function ProductsPage() {
         onClose={() => setShowBulkDeleteConfirm(false)}
         onConfirm={onBulkDelete}
         isDeleting={isBulkDeleting}
+      />
+      <UploadDialog
+        open={showUploadDialog}
+        onClose={() => setShowUploadDialog(false)}
+        selectedProducts={products.filter((p) => selected.includes(p.id))}
+        sites={sites || []}
+        onUploadSuccess={() => {
+          setShowUploadDialog(false);
+          setSelected([]);
+          mutateProducts();
+        }}
       />
     </div>
   );
@@ -1301,6 +1235,431 @@ function BulkDeleteConfirmationDialog({
             disabled={isDeleting}
           >
             {isDeleting ? "Đang xóa..." : `Xóa ${count} sản phẩm`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function UploadDialog({
+  open,
+  onClose,
+  selectedProducts,
+  sites,
+  onUploadSuccess,
+}: {
+  open: boolean;
+  onClose: () => void;
+  selectedProducts: Product[];
+  sites: Site[];
+  onUploadSuccess: () => void;
+}) {
+  const [selectedSiteId, setSelectedSiteId] = useState<string>("");
+  const [categories, setCategories] = useState<WooCommerceCategory[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [productCategories, setProductCategories] = useState<
+    Record<string, string>
+  >({});
+  const [newCategoryName, setNewCategoryName] = useState<Record<string, string>>(
+    {}
+  );
+  const [isCreatingCategory, setIsCreatingCategory] = useState<
+    Record<string, boolean>
+  >({});
+  const [isUploading, setIsUploading] = useState(false);
+
+  type WooCommerceCategory = {
+    id: string;
+    wooId: string;
+    name: string;
+    slug: string | null;
+    parentId: string | null;
+    count: number;
+    syncedAt: string;
+  };
+
+  const loadCategories = useCallback(async () => {
+    if (!selectedSiteId) return;
+    try {
+      setIsLoadingCategories(true);
+      const res = await fetch(`/api/proxy/sites/${selectedSiteId}/categories`);
+      if (!res.ok) throw new Error("Failed to load categories");
+      const data = await res.json();
+      setCategories(data);
+    } catch (error: any) {
+      alert(error.message || "Không thể tải categories");
+    } finally {
+      setIsLoadingCategories(false);
+    }
+  }, [selectedSiteId]);
+
+  // Load categories when site is selected
+  useEffect(() => {
+    if (selectedSiteId && open) {
+      loadCategories();
+    } else {
+      setCategories([]);
+    }
+  }, [selectedSiteId, open, loadCategories]);
+
+  // Auto-match product categories with WooCommerce categories
+  useEffect(() => {
+    if (categories.length > 0 && selectedProducts.length > 0) {
+      const autoMatched: Record<string, string> = {};
+      
+      selectedProducts.forEach((product) => {
+        if (!product.category) return;
+        
+        const productCatLower = product.category.toLowerCase().trim();
+        
+        // First, try exact match (highest priority)
+        let matchedCategory = categories.find((wcCat) => {
+          const wcNameLower = wcCat.name.toLowerCase().trim();
+          const wcSlugLower = (wcCat.slug || "").toLowerCase().trim();
+          return (
+            productCatLower === wcNameLower ||
+            productCatLower === wcSlugLower
+          );
+        });
+        
+        // If no exact match, try partial match
+        if (!matchedCategory) {
+          matchedCategory = categories.find((wcCat) => {
+            const wcNameLower = wcCat.name.toLowerCase().trim();
+            const wcSlugLower = (wcCat.slug || "").toLowerCase().trim();
+            return (
+              productCatLower.includes(wcNameLower) ||
+              wcNameLower.includes(productCatLower) ||
+              (wcSlugLower && productCatLower.includes(wcSlugLower)) ||
+              (wcSlugLower && wcSlugLower.includes(productCatLower))
+            );
+          });
+        }
+        
+        if (matchedCategory) {
+          autoMatched[product.id] = matchedCategory.wooId;
+        }
+      });
+      
+      // Only update if there are matches and not already set
+      if (Object.keys(autoMatched).length > 0) {
+        setProductCategories((prev) => {
+          const updated = { ...prev };
+          Object.keys(autoMatched).forEach((productId) => {
+            // Only auto-set if not already manually selected
+            if (!updated[productId]) {
+              updated[productId] = autoMatched[productId];
+            }
+          });
+          return updated;
+        });
+      }
+    }
+  }, [categories, selectedProducts]);
+
+  // Initialize newCategoryName with Shopee categories when dialog opens
+  useEffect(() => {
+    if (open && selectedProducts.length > 0) {
+      const initialCategories: Record<string, string> = {};
+      selectedProducts.forEach((product) => {
+        // Pre-fill with Shopee category if available
+        if (product.category) {
+          initialCategories[product.id] = product.category;
+        }
+      });
+      if (Object.keys(initialCategories).length > 0) {
+        setNewCategoryName((prev) => {
+          // Only set if not already set (don't overwrite user input)
+          const updated = { ...prev };
+          Object.keys(initialCategories).forEach((productId) => {
+            if (!updated[productId]) {
+              updated[productId] = initialCategories[productId];
+            }
+          });
+          return updated;
+        });
+      }
+    }
+    // Reset when dialog closes
+    if (!open) {
+      setNewCategoryName({});
+      setProductCategories({});
+    }
+  }, [open, selectedProducts]);
+
+  async function syncCategories() {
+    if (!selectedSiteId) {
+      alert("Vui lòng chọn site trước");
+      return;
+    }
+    try {
+      setIsSyncing(true);
+      const res = await fetch(
+        `/api/proxy/sites/${selectedSiteId}/categories/sync`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: "Lỗi sync" }));
+        throw new Error(data.message || "Lỗi sync");
+      }
+      const data = await res.json();
+      alert(data.message || `Đã sync ${data.count} categories`);
+      loadCategories();
+    } catch (e: any) {
+      alert(e.message || "Lỗi sync categories");
+    } finally {
+      setIsSyncing(false);
+    }
+  }
+
+  async function createCategory(productId: string) {
+    if (!selectedSiteId) {
+      alert("Vui lòng chọn site trước");
+      return;
+    }
+    const categoryName = newCategoryName[productId]?.trim();
+    if (!categoryName) {
+      alert("Vui lòng nhập tên category");
+      return;
+    }
+
+    try {
+      setIsCreatingCategory((prev) => ({ ...prev, [productId]: true }));
+      const res = await fetch(`/api/proxy/sites/${selectedSiteId}/categories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: categoryName }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({
+          message: "Lỗi tạo category",
+        }));
+        throw new Error(data.message || "Lỗi tạo category");
+      }
+      const newCategory = await res.json();
+      setCategories((prev) => [...prev, newCategory]);
+      setProductCategories((prev) => ({
+        ...prev,
+        [productId]: newCategory.wooId,
+      }));
+      setNewCategoryName((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+      alert("Đã tạo category thành công");
+    } catch (e: any) {
+      alert(e.message || "Lỗi tạo category");
+    } finally {
+      setIsCreatingCategory((prev) => {
+        const next = { ...prev };
+        delete next[productId];
+        return next;
+      });
+    }
+  }
+
+  async function handleUpload() {
+    if (!selectedSiteId) {
+      alert("Vui lòng chọn site đích");
+      return;
+    }
+
+    // Check if all products have categories selected
+    const productsWithoutCategory = selectedProducts.filter(
+      (p) => !productCategories[p.id]
+    );
+    if (productsWithoutCategory.length > 0) {
+      alert(
+        `Vui lòng chọn category cho tất cả sản phẩm. Còn ${productsWithoutCategory.length} sản phẩm chưa có category.`
+      );
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      // Create upload jobs for each product with its category
+      const uploadPromises = selectedProducts.map((product) => {
+        const categoryId = productCategories[product.id];
+        // targetCategory must always be ID (wooId), never name
+        if (!categoryId) {
+          throw new Error(`Sản phẩm "${product.title}" chưa có category được chọn`);
+        }
+
+        return fetch("/api/proxy/products/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productIds: [product.id],
+            siteId: selectedSiteId,
+            targetCategory: categoryId, // Always ID
+          }),
+        });
+      });
+
+      const results = await Promise.all(uploadPromises);
+      const errors = results.filter((r) => !r.ok);
+      if (errors.length > 0) {
+        throw new Error(
+          `Có ${errors.length} sản phẩm không thể tạo job upload`
+        );
+      }
+
+      const successCount = results.length;
+      alert(`Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Upload Jobs để xử lý.`);
+      onUploadSuccess();
+    } catch (e: any) {
+      alert(e.message || "Lỗi khi upload");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Upload sản phẩm lên WooCommerce</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Chọn site đích và category cho từng sản phẩm
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Site Selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Chọn trang đích</label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={selectedSiteId}
+              onChange={(e) => setSelectedSiteId(e.target.value)}
+            >
+              <option value="">Chọn site...</option>
+              {sites.map((site) => (
+                <option key={site.id} value={site.id}>
+                  {site.name}
+                </option>
+              ))}
+            </select>
+            {selectedSiteId && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={syncCategories}
+                  disabled={isSyncing}
+                >
+                  {isSyncing ? "Đang sync..." : "Sync Categories"}
+                </Button>
+                {isLoadingCategories && (
+                  <span className="text-sm text-muted-foreground">
+                    Đang tải categories...
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Products List */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Danh sách sản phẩm ({selectedProducts.length})
+            </label>
+            <div className="border rounded-md divide-y max-h-96 overflow-y-auto">
+              {selectedProducts.map((product) => (
+                <div key={product.id} className="p-4 space-y-3">
+                  <div className="font-medium line-clamp-2">
+                    {product.title || "Chưa có tiêu đề"}
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <label className="text-sm text-muted-foreground min-w-[100px]">
+                      Category:
+                    </label>
+                    <select
+                      className="flex h-9 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                      value={productCategories[product.id] || ""}
+                      onChange={(e) =>
+                        setProductCategories((prev) => ({
+                          ...prev,
+                          [product.id]: e.target.value,
+                        }))
+                      }
+                      disabled={!selectedSiteId}
+                    >
+                      <option value="">Chọn category...</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.wooId}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <label className="text-sm text-muted-foreground min-w-[100px]">
+                      Hoặc tạo mới:
+                    </label>
+                    <div className="flex-1 space-y-1">
+                      <Input
+                        placeholder={
+                          product.category
+                            ? `Gợi ý: ${product.category} (từ Shopee)`
+                            : "Tên category mới"
+                        }
+                        value={newCategoryName[product.id] || ""}
+                        onChange={(e) =>
+                          setNewCategoryName((prev) => ({
+                            ...prev,
+                            [product.id]: e.target.value,
+                          }))
+                        }
+                        disabled={!selectedSiteId || isCreatingCategory[product.id]}
+                      />
+                      {product.category && 
+                       !newCategoryName[product.id] && 
+                       !productCategories[product.id] && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNewCategoryName((prev) => ({
+                              ...prev,
+                              [product.id]: product.category || "",
+                            }))
+                          }
+                          className="text-xs text-primary hover:underline"
+                        >
+                          Dùng category từ Shopee: {product.category}
+                        </button>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => createCategory(product.id)}
+                      disabled={
+                        !selectedSiteId ||
+                        !newCategoryName[product.id]?.trim() ||
+                        isCreatingCategory[product.id]
+                      }
+                    >
+                      {isCreatingCategory[product.id]
+                        ? "Đang tạo..."
+                        : "Tạo"}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={onClose} disabled={isUploading}>
+            Huỷ
+          </Button>
+          <Button onClick={handleUpload} disabled={isUploading || !selectedSiteId}>
+            {isUploading ? "Đang upload..." : "Upload"}
           </Button>
         </DialogFooter>
       </DialogContent>
