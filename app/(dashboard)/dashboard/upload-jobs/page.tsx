@@ -87,8 +87,10 @@ export default function UploadJobsPage() {
   }, []);
 
   const handleSelectAll = useCallback((checked: boolean) => {
+    // Only select PENDING jobs
+    const pendingJobs = jobs.filter((job) => job.status === "PENDING");
     if (checked) {
-      setSelectedJobs(new Set(jobs.map((job) => job.id)));
+      setSelectedJobs(new Set(pendingJobs.map((job) => job.id)));
     } else {
       setSelectedJobs(new Set());
     }
@@ -97,9 +99,19 @@ export default function UploadJobsPage() {
   const handleProcessSelected = useCallback(async () => {
     const jobIds = selectedJobs.size > 0 ? Array.from(selectedJobs) : undefined;
     
+    // Calculate number of jobs to process and estimated cost
+    let jobCount = 0;
+    if (jobIds && jobIds.length > 0) {
+      jobCount = jobIds.length;
+    } else {
+      // Count PENDING and FAILED jobs
+      jobCount = jobs.filter((job) => job.status === "PENDING" || job.status === "FAILED").length;
+    }
+    
+    const estimatedCost = jobCount * 1000; // 1000 VND per successful upload
     const message = jobIds 
-      ? `Bạn có chắc muốn xử lý ${jobIds.length} job đã chọn?`
-      : `Bạn có chắc muốn xử lý tất cả jobs PENDING/FAILED?`;
+      ? `Bạn có chắc muốn xử lý ${jobIds.length} job đã chọn?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`
+      : `Bạn có chắc muốn xử lý tất cả jobs PENDING/FAILED (${jobCount} job)?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`;
     const confirmed = window.confirm(message);
     if (!confirmed) return;
 
@@ -169,7 +181,7 @@ export default function UploadJobsPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedJobs, mutate]);
+  }, [selectedJobs, mutate, jobs]);
 
   const handleCancelSelected = useCallback(async () => {
     const jobIds = selectedJobs.size > 0 ? Array.from(selectedJobs) : undefined;
@@ -256,10 +268,11 @@ export default function UploadJobsPage() {
     );
   };
 
-  const allSelected = useMemo(
-    () => jobs.length > 0 && jobs.every((job) => selectedJobs.has(job.id)),
-    [jobs, selectedJobs]
-  );
+  const allSelected = useMemo(() => {
+    // Only check if all PENDING jobs are selected
+    const pendingJobs = jobs.filter((job) => job.status === "PENDING");
+    return pendingJobs.length > 0 && pendingJobs.every((job) => selectedJobs.has(job.id));
+  }, [jobs, selectedJobs]);
 
 
   // Fetch sites for filter
@@ -281,7 +294,7 @@ export default function UploadJobsPage() {
               ? "Đang hủy..." 
               : selectedJobs.size > 0 
                 ? `Hủy ${selectedJobs.size} job đã chọn`
-                : "Hủy tất cả FAILED"}
+                : "Hủy job"}
           </Button>
           <Button
             onClick={handleProcessSelected}
@@ -356,7 +369,7 @@ export default function UploadJobsPage() {
                   <TableHead>Category</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Retry</TableHead>
-                  <TableHead>Lỗi</TableHead>
+                  <TableHead>Kết quả</TableHead>
                   <TableHead>Ngày tạo</TableHead>
                   <TableHead>Cập nhật</TableHead>
                 </TableRow>
