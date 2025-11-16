@@ -619,14 +619,6 @@ export default function ProductsPage() {
                     <div className="font-medium line-clamp-2">
                       {product.title || "Chưa có tiêu đề"}
                     </div>
-                    <a
-                      href={product.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      {product.sourceUrl}
-                    </a>
                   </TableCell>
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
@@ -1240,16 +1232,6 @@ function DeleteConfirmationDialog({
           <div className="font-medium">
             {product.title || "Chưa có tiêu đề"}
           </div>
-          {product.sourceUrl && (
-            <a
-              href={product.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm text-primary hover:underline"
-            >
-              {product.sourceUrl}
-            </a>
-          )}
         </div>
         <DialogFooter>
           <Button
