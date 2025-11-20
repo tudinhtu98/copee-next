@@ -1550,7 +1550,7 @@ function UploadDialog({
       }
 
       const successCount = results.length;
-      toast.success(`Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Upload Jobs để xử lý.`);
+      toast.success(`Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Xử lý Upload để upload sản phẩm lên WordPress.`);
       onUploadSuccess();
     } catch (e: any) {
       toast.error(e.message || "Lỗi khi upload");

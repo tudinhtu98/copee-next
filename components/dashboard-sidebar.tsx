@@ -26,7 +26,7 @@ export default function DashboardSidebar() {
   const navItems = [
     { value: "overview", href: "/dashboard", label: "Tổng quan" },
     { value: "products", href: "/dashboard/products", label: "Sản phẩm" },
-    { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Upload Jobs" },
+    { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Xử lý Upload" },
     { value: "categories", href: "/dashboard/categories", label: "Danh mục" },
     { value: "settings", href: "/dashboard/settings", label: "Cài đặt WordPress" },
     { value: "user-settings", href: "/dashboard/user-settings", label: "Cài đặt tài khoản" },

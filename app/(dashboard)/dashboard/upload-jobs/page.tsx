@@ -283,7 +283,7 @@ export default function UploadJobsPage() {
   return (
     <div className="space-y-4 w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Upload Jobs</h1>
+        <h1 className="text-2xl font-bold">Xử lý Upload</h1>
         <div className="flex gap-2">
           <Button
             onClick={handleCancelSelected}
