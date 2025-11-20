@@ -70,6 +70,7 @@ export default function SettingsPage() {
   const [isSavingWpAuth, setIsSavingWpAuth] = useState(false);
   const [isWooKeysDialogOpen, setIsWooKeysDialogOpen] = useState(false);
   const [isWpAuthDialogOpen, setIsWpAuthDialogOpen] = useState(false);
+  const [testingSiteId, setTestingSiteId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     siteId: string | null;
     siteName: string;
@@ -223,6 +224,43 @@ export default function SettingsPage() {
       setIsSavingWpAuth(false);
     }
   }
+
+  async function onTestConnection(siteId: string) {
+    try {
+      setTestingSiteId(siteId);
+      const res = await fetch(`/api/proxy/sites/${siteId}/test-connection`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: "Lỗi test connection" }));
+        return toast.error(data.message || "Lỗi test connection");
+      }
+      const results = await res.json();
+      
+      // Show results for WooCommerce
+      if (results.wooCommerce) {
+        if (results.wooCommerce.success) {
+          toast.success(`WooCommerce: ${results.wooCommerce.message}`);
+        } else {
+          toast.error(`WooCommerce: ${results.wooCommerce.message}`);
+        }
+      }
+      
+      // Show results for WordPress
+      if (results.wordPress) {
+        if (results.wordPress.success) {
+          toast.success(`WordPress: ${results.wordPress.message}`);
+        } else {
+          toast.warning(`WordPress: ${results.wordPress.message}`);
+        }
+      }
+    } catch (e: unknown) {
+      const error = e as { message?: string };
+      toast.error(error.message || "Lỗi test connection");
+    } finally {
+      setTestingSiteId(null);
+    }
+  }
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -334,12 +372,12 @@ export default function SettingsPage() {
                   {isSaving ? "Đang lưu..." : "Thêm Site"}
                 </Button>
               </DialogFooter>
-            </form>
+    </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="space-y-2">
+    <div className="space-y-2">
         {isLoading && (
           <div className="text-sm text-muted-foreground">Đang tải...</div>
         )}
@@ -349,25 +387,35 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="grid gap-3">
-          {sites?.map((site) => (
+        {sites?.map((site) => (
             <div
               key={site.id}
               className="rounded-lg border p-4 space-y-3"
             >
               <div className="flex items-start justify-between">
-                <div>
+            <div>
                   <div className="font-semibold text-lg">{site.name}</div>
                   <div className="text-sm text-muted-foreground mt-1">
                     {site.baseUrl}
                   </div>
+            </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onTestConnection(site.id)}
+                    disabled={testingSiteId === site.id}
+                  >
+                    {testingSiteId === site.id ? "Đang test..." : "Test Connection"}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => openDeleteDialog(site)}
+                  >
+              Xoá
+            </Button>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => openDeleteDialog(site)}
-                >
-                  Xoá
-                </Button>
               </div>
 
               <div className="grid gap-3 pt-2 border-t">
@@ -542,13 +590,13 @@ export default function SettingsPage() {
                 </div>
 
               </div>
-            </div>
-          ))}
-          {sites && sites.length === 0 && !isLoading && (
+          </div>
+        ))}
+        {sites && sites.length === 0 && !isLoading && (
             <div className="text-center py-8 text-sm text-muted-foreground">
               Chưa có site nào. Nhấn &quot;Thêm Site Mới&quot; để bắt đầu.
             </div>
-          )}
+        )}
         </div>
       </div>
 
