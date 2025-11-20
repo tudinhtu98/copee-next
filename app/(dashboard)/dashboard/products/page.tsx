@@ -67,7 +67,8 @@ type Product = {
   sourceUrl: string;
   status: keyof typeof statusDisplay;
   category: string | null;
-  price: number | null;
+  price: number | null; // Sale price (giá đã giảm)
+  originalPrice: number | null; // Regular price (giá gốc)
   description: string | null;
   images?: string[] | null;
   currency?: string | null;
@@ -549,10 +550,30 @@ export default function ProductsPage() {
                   </TableCell>
                   <TableCell>{product.category || "-"}</TableCell>
                   <TableCell>
-                    {product.price != null
-                      ? new Intl.NumberFormat("vi-VN").format(product.price) +
-                        "₫"
-                      : "-"}
+                    {product.originalPrice != null || product.price != null ? (
+                      <div className="flex flex-col gap-0.5">
+                        {product.originalPrice != null && product.price != null && product.price < product.originalPrice ? (
+                          <>
+                            <span className="text-sm text-gray-500 line-through">
+                              {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}₫
+                            </span>
+                            <span className="text-base font-semibold text-red-600">
+                              {new Intl.NumberFormat("vi-VN").format(product.price)}₫
+                            </span>
+                          </>
+                        ) : product.price != null ? (
+                          <span className="text-base">
+                            {new Intl.NumberFormat("vi-VN").format(product.price)}₫
+                          </span>
+                        ) : product.originalPrice != null ? (
+                          <span className="text-base">
+                            {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}₫
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : (
+                      "-"
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex gap-2 justify-end">
@@ -780,10 +801,30 @@ function ProductDetailDialog({
             <div className="space-y-2">
               <label className="text-sm font-medium">Giá</label>
               <div className="text-sm">
-                {product.price != null
-                  ? new Intl.NumberFormat("vi-VN").format(product.price) +
-                    (product.currency || "₫")
-                  : "-"}
+                {product.originalPrice != null || product.price != null ? (
+                  <div className="flex flex-col gap-1">
+                    {product.originalPrice != null && product.price != null && product.price < product.originalPrice ? (
+                      <>
+                        <span className="text-gray-500 line-through">
+                          Giá gốc: {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}{product.currency || "₫"}
+                        </span>
+                        <span className="font-semibold text-red-600">
+                          Giá đã giảm: {new Intl.NumberFormat("vi-VN").format(product.price)}{product.currency || "₫"}
+                        </span>
+                      </>
+                    ) : product.price != null ? (
+                      <span>
+                        {new Intl.NumberFormat("vi-VN").format(product.price)}{product.currency || "₫"}
+                      </span>
+                    ) : product.originalPrice != null ? (
+                      <span>
+                        {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}{product.currency || "₫"}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : (
+                  "-"
+                )}
               </div>
             </div>
             <div className="space-y-2 md:col-span-2">

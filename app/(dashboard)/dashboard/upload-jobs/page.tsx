@@ -28,7 +28,8 @@ type UploadJob = {
   product: {
     id: string;
     title: string;
-    price: number | null;
+    price: number | null; // Sale price (giá đã giảm)
+    originalPrice: number | null; // Regular price (giá gốc)
     currency: string | null;
     errorMessage: string | null;
   };
@@ -392,9 +393,26 @@ export default function UploadJobsPage() {
                           {job.product.title}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {job.product.price !== null
-                            ? `${job.product.price.toLocaleString()} ${job.product.currency || "VND"}`
-                            : "N/A"}
+                          {job.product.originalPrice != null || job.product.price != null ? (
+                            <div className="flex flex-col gap-0.5">
+                              {job.product.originalPrice != null && job.product.price != null && job.product.price < job.product.originalPrice ? (
+                                <>
+                                  <span className="line-through text-gray-400">
+                                    {job.product.originalPrice.toLocaleString()} {job.product.currency || "VND"}
+                                  </span>
+                                  <span className="text-red-600 font-semibold">
+                                    {job.product.price.toLocaleString()} {job.product.currency || "VND"}
+                                  </span>
+                                </>
+                              ) : job.product.price != null ? (
+                                <span>{job.product.price.toLocaleString()} {job.product.currency || "VND"}</span>
+                              ) : job.product.originalPrice != null ? (
+                                <span>{job.product.originalPrice.toLocaleString()} {job.product.currency || "VND"}</span>
+                              ) : null}
+                            </div>
+                          ) : (
+                            "N/A"
+                          )}
                         </div>
                       </div>
                     </TableCell>
