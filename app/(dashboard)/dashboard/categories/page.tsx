@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -50,6 +50,13 @@ export default function CategoriesPage() {
   const [isSyncing, setIsSyncing] = useState(false)
 
   const { data: sites } = useSWR<Site[]>('/sites', fetcher)
+
+  // Auto-select first site when sites are loaded
+  useEffect(() => {
+    if (sites && sites.length > 0 && !selectedSiteId) {
+      setSelectedSiteId(sites[0].id)
+    }
+  }, [sites, selectedSiteId])
 
   const { data: categories, mutate: mutateCategories } = useSWR<WooCommerceCategory[]>(
     selectedSiteId ? `/sites/${selectedSiteId}/categories` : null,

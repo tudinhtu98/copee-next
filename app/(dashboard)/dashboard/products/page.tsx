@@ -1312,6 +1312,13 @@ function UploadDialog({
   >({});
   const [isUploading, setIsUploading] = useState(false);
 
+  // Auto-select first site when dialog opens and sites are available
+  useEffect(() => {
+    if (open && sites.length > 0 && !selectedSiteId) {
+      setSelectedSiteId(sites[0].id);
+    }
+  }, [open, sites, selectedSiteId]);
+
   type WooCommerceCategory = {
     id: string;
     wooId: string;
