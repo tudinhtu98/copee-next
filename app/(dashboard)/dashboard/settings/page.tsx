@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormEvent, useState } from "react";
 import useSWR from "swr";
-import { CategoryMappingsDialog } from "@/components/category-mappings-dialog";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -542,16 +541,6 @@ export default function SettingsPage() {
                   </Dialog>
                 </div>
 
-                {/* Category Mappings */}
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">Category Mappings</div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Quản lý ánh xạ danh mục Shopee → WooCommerce
-                    </div>
-                  </div>
-                  <CategoryMappingsDialog siteId={site.id} siteName={site.name} />
-                </div>
               </div>
             </div>
           ))}
