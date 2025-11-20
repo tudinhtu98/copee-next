@@ -35,6 +35,7 @@ type Site = {
   wooConsumerSecret?: string | null;
   wpUsername?: string | null;
   wpApplicationPassword?: string | null;
+  shopeeAffiliateId?: string | null;
 };
 
 export default function SettingsPage() {
@@ -46,6 +47,7 @@ export default function SettingsPage() {
     wooConsumerSecret: "",
     wpUsername: "",
     wpApplicationPassword: "",
+    shopeeAffiliateId: "",
   });
   const [editingWooKeys, setEditingWooKeys] = useState<{
     siteId: string | null;
@@ -65,11 +67,20 @@ export default function SettingsPage() {
     wpUsername: "",
     wpApplicationPassword: "",
   });
+  const [editingShopeeAffiliate, setEditingShopeeAffiliate] = useState<{
+    siteId: string | null;
+    shopeeAffiliateId: string;
+  }>({
+    siteId: null,
+    shopeeAffiliateId: "",
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingWooKeys, setIsSavingWooKeys] = useState(false);
   const [isSavingWpAuth, setIsSavingWpAuth] = useState(false);
+  const [isSavingShopeeAffiliate, setIsSavingShopeeAffiliate] = useState(false);
   const [isWooKeysDialogOpen, setIsWooKeysDialogOpen] = useState(false);
   const [isWpAuthDialogOpen, setIsWpAuthDialogOpen] = useState(false);
+  const [isShopeeAffiliateDialogOpen, setIsShopeeAffiliateDialogOpen] = useState(false);
   const [testingSiteId, setTestingSiteId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     siteId: string | null;
@@ -96,7 +107,10 @@ export default function SettingsPage() {
       const res = await fetch("/api/proxy/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          shopeeAffiliateId: form.shopeeAffiliateId || undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: "Lỗi lưu" }));
@@ -110,6 +124,7 @@ export default function SettingsPage() {
         wooConsumerSecret: "",
         wpUsername: "",
         wpApplicationPassword: "",
+        shopeeAffiliateId: "",
       });
       setIsAddSiteDialogOpen(false);
       mutate();
@@ -160,6 +175,39 @@ export default function SettingsPage() {
       wpApplicationPassword: "", // Don't show existing password for security
     });
     setIsWpAuthDialogOpen(true);
+  }
+
+  function openEditShopeeAffiliateDialog(site: Site) {
+    setEditingShopeeAffiliate({
+      siteId: site.id,
+      shopeeAffiliateId: site.shopeeAffiliateId || "",
+    });
+    setIsShopeeAffiliateDialogOpen(true);
+  }
+
+  async function onSaveShopeeAffiliate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingShopeeAffiliate.siteId) return;
+    try {
+      setIsSavingShopeeAffiliate(true);
+      const res = await fetch(`/api/proxy/sites/${editingShopeeAffiliate.siteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          shopeeAffiliateId: editingShopeeAffiliate.shopeeAffiliateId || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ message: "Lỗi lưu" }));
+        return toast.error(data.message || "Lỗi lưu");
+      }
+      toast.success("Đã cập nhật Shopee Affiliate ID");
+      setEditingShopeeAffiliate({ siteId: null, shopeeAffiliateId: "" });
+      setIsShopeeAffiliateDialogOpen(false);
+      mutate();
+    } finally {
+      setIsSavingShopeeAffiliate(false);
+    }
   }
   function openDeleteDialog(site: Site) {
     setDeleteConfirm({
@@ -349,6 +397,19 @@ export default function SettingsPage() {
                     Tạo tại: WordPress Admin → Users → Profile → Application Passwords
                   </p>
                 </div>
+                <div className="grid gap-2 pt-2 border-t">
+                  <label className="text-sm font-medium">Shopee Affiliate ID (Tùy chọn)</label>
+                  <Input
+                    placeholder="Nhập Affiliate ID từ Shopee"
+                    value={form.shopeeAffiliateId}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, shopeeAffiliateId: e.target.value }))
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Link sản phẩm sẽ tự động chuyển thành affiliate link khi upload
+                  </p>
+                </div>
               </div>
               <DialogFooter>
                 <Button
@@ -356,14 +417,15 @@ export default function SettingsPage() {
                   variant="outline"
                   onClick={() => {
                     setIsAddSiteDialogOpen(false);
-                    setForm({
-                      name: "",
-                      baseUrl: "",
-                      wooConsumerKey: "",
-                      wooConsumerSecret: "",
-                      wpUsername: "",
-                      wpApplicationPassword: "",
-                    });
+                  setForm({
+                    name: "",
+                    baseUrl: "",
+                    wooConsumerKey: "",
+                    wooConsumerSecret: "",
+                    wpUsername: "",
+                    wpApplicationPassword: "",
+                    shopeeAffiliateId: "",
+                  });
                   }}
                 >
                   Hủy
@@ -589,6 +651,74 @@ export default function SettingsPage() {
                   </Dialog>
                 </div>
 
+                {/* Shopee Affiliate ID */}
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Shopee Affiliate ID</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {site.shopeeAffiliateId ? (
+                        <>Affiliate ID: {site.shopeeAffiliateId}</>
+                      ) : (
+                        <span className="text-yellow-600">Chưa cấu hình</span>
+                      )}
+                    </div>
+                  </div>
+                  <Dialog open={isShopeeAffiliateDialogOpen && editingShopeeAffiliate.siteId === site.id} onOpenChange={setIsShopeeAffiliateDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditShopeeAffiliateDialog(site)}
+                      >
+                        {site.shopeeAffiliateId ? "Chỉnh sửa" : "Thiết lập"}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <form onSubmit={onSaveShopeeAffiliate}>
+                        <DialogHeader>
+                          <DialogTitle>
+                            {site.shopeeAffiliateId ? "Chỉnh sửa" : "Thiết lập"} Shopee Affiliate ID
+                          </DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid gap-2">
+                            <label className="text-sm font-medium">
+                              Shopee Affiliate ID
+                            </label>
+                            <Input
+                              placeholder="Nhập Affiliate ID từ Shopee"
+                              value={editingShopeeAffiliate.shopeeAffiliateId}
+                              onChange={(e) =>
+                                setEditingShopeeAffiliate((prev) => ({
+                                  ...prev,
+                                  shopeeAffiliateId: e.target.value,
+                                }))
+                              }
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Link sản phẩm sẽ tự động chuyển thành affiliate link khi upload lên WooCommerce
+                            </p>
+                          </div>
+                        </div>
+                        <DialogFooter>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingShopeeAffiliate({ siteId: null, shopeeAffiliateId: "" });
+                              setIsShopeeAffiliateDialogOpen(false);
+                            }}
+                          >
+                            Hủy
+                          </Button>
+                          <Button type="submit" disabled={isSavingShopeeAffiliate}>
+                            {isSavingShopeeAffiliate ? "Đang lưu..." : "Lưu"}
+                          </Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
           </div>
         ))}
