@@ -1,67 +1,285 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
+import useSWR from "swr";
+import { fetcher, apiFetch } from "@/src/lib/fetcher";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+
+type ApiKey = {
+  id: string;
+  name: string;
+  permissions: string[];
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+};
+
+type CreateApiKeyResponse = {
+  id: string;
+  key: string; // Only shown once!
+  name: string;
+  permissions: string[];
+  expiresAt: string | null;
+  createdAt: string;
+};
 
 export default function UserSettingsPage() {
   const { data: session } = useSession() as any;
   const [copied, setCopied] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [newKeyExpiresInDays, setNewKeyExpiresInDays] = useState<number | undefined>(undefined);
+  const [createdKey, setCreatedKey] = useState<CreateApiKeyResponse | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
-  const token = session?.accessToken || "";
+  const { data: apiKeys, mutate: mutateApiKeys } = useSWR<ApiKey[]>(
+    "/api-keys",
+    fetcher
+  );
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(token);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      toast.success("Đã copy!");
     } catch (error) {
       toast.error("Không thể copy. Vui lòng chọn và copy thủ công.");
+    }
+  };
+
+  const handleCreateApiKey = async () => {
+    if (!newKeyName.trim()) {
+      toast.warning("Vui lòng nhập tên cho API key");
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      const res = await apiFetch("/api-keys", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newKeyName,
+          expiresInDays: newKeyExpiresInDays || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Không thể tạo API key");
+      }
+
+      const data: CreateApiKeyResponse = await res.json();
+      setCreatedKey(data);
+      mutateApiKeys();
+      setNewKeyName("");
+      setNewKeyExpiresInDays(undefined);
+      setIsCreateDialogOpen(false);
+      toast.success("API key đã được tạo thành công!");
+    } catch (e: any) {
+      toast.error(e.message || "Lỗi khi tạo API key");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleRevokeApiKey = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn thu hồi API key này?")) {
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/api-keys/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Không thể thu hồi API key");
+      }
+
+      mutateApiKeys();
+      toast.success("API key đã được thu hồi");
+    } catch (e: any) {
+      toast.error(e.message || "Lỗi khi thu hồi API key");
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">Cài đặt</h1>
+        <h1 className="text-2xl font-semibold">API Key cho Extension</h1>
         <p className="text-sm text-muted-foreground">
-          Quản lý cài đặt tài khoản và mở rộng Chrome
+          Tạo và quản lý API Key để sử dụng với Chrome Extension
         </p>
       </div>
 
+      {/* API Keys Section */}
       <div className="rounded-md border p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Chrome Extension Token</h2>
-        <p className="text-sm text-muted-foreground">
-          Sử dụng token này để cấu hình Chrome extension Copee
-        </p>
-
-        <div className="flex gap-2">
-          <Input value={token} readOnly className="font-mono text-sm" />
-          <Button onClick={copyToClipboard} variant="outline">
-            {copied ? "✓ Đã copy" : "Copy"}
-          </Button>
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-lg font-semibold">API Keys</h2>
+            <p className="text-sm text-muted-foreground">
+              Tạo API keys để sử dụng với Chrome Extension. API keys có thời gian hết hạn dài hơn access token.
+            </p>
+          </div>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>Tạo API Key</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Tạo API Key mới</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Tên</label>
+                  <Input
+                    value={newKeyName}
+                    onChange={(e) => setNewKeyName(e.target.value)}
+                    placeholder="Ví dụ: Chrome Extension"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">
+                    Thời gian hết hạn (ngày, để trống = không hết hạn)
+                  </label>
+                  <Input
+                    type="number"
+                    value={newKeyExpiresInDays || ""}
+                    onChange={(e) =>
+                      setNewKeyExpiresInDays(
+                        e.target.value ? parseInt(e.target.value) : undefined
+                      )
+                    }
+                    placeholder="Ví dụ: 90"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
+                  Hủy
+                </Button>
+                <Button onClick={handleCreateApiKey} disabled={isCreating}>
+                  {isCreating ? "Đang tạo..." : "Tạo"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-          <h3 className="font-semibold text-sm mb-2">Hướng dẫn sử dụng:</h3>
-          <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-            <li>Click "Copy" để copy token</li>
-            <li>Mở Chrome extension Copee</li>
-            <li>Click "Settings" trong popup</li>
-            <li>Paste token vào ô "Auth Token"</li>
-            <li>
-              Điền API Endpoint:{" "}
-              <code className="bg-white px-1 rounded">
-                http://localhost:3000
-              </code>
-            </li>
-            <li>Click "Save Settings"</li>
-          </ol>
-        </div>
+        {/* Show created key (only once) */}
+        {createdKey && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 space-y-2">
+            <p className="font-semibold text-sm">
+              ⚠️ Lưu ý: API key này chỉ hiển thị một lần. Hãy copy và lưu lại ngay!
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={createdKey.key}
+                readOnly
+                className="font-mono text-sm"
+              />
+              <Button
+                onClick={() => copyToClipboard(createdKey.key)}
+                variant="outline"
+              >
+                {copied ? "✓ Đã copy" : "Copy"}
+              </Button>
+              <Button
+                onClick={() => setCreatedKey(null)}
+                variant="outline"
+              >
+                Đóng
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* API Keys List */}
+        {apiKeys && apiKeys.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tên</TableHead>
+                <TableHead>Quyền</TableHead>
+                <TableHead>Lần sử dụng cuối</TableHead>
+                <TableHead>Hết hạn</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead>Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {apiKeys.map((key) => (
+                <TableRow key={key.id}>
+                  <TableCell className="font-medium">{key.name}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      {key.permissions.map((perm) => (
+                        <Badge key={perm} variant="secondary" className="text-xs">
+                          {perm}
+                        </Badge>
+                      ))}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {key.lastUsedAt
+                      ? new Date(key.lastUsedAt).toLocaleDateString("vi-VN")
+                      : "Chưa sử dụng"}
+                  </TableCell>
+                  <TableCell>
+                    {key.expiresAt
+                      ? new Date(key.expiresAt).toLocaleDateString("vi-VN")
+                      : "Không hết hạn"}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(key.createdAt).toLocaleDateString("vi-VN")}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRevokeApiKey(key.id)}
+                    >
+                      Thu hồi
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Chưa có API key nào. Tạo API key mới để sử dụng với Chrome Extension.
+          </p>
+        )}
       </div>
 
+      {/* Account Info */}
       <div className="rounded-md border p-6 space-y-4">
         <h2 className="text-lg font-semibold">Thông tin tài khoản</h2>
         <div className="space-y-2">

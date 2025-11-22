@@ -29,7 +29,7 @@ export default function DashboardSidebar() {
     { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Xử lý Upload" },
     { value: "categories", href: "/dashboard/categories", label: "Danh mục" },
     { value: "settings", href: "/dashboard/settings", label: "Cài đặt WordPress" },
-    { value: "user-settings", href: "/dashboard/user-settings", label: "Cài đặt tài khoản" },
+    { value: "user-settings", href: "/dashboard/user-settings", label: "API Key cho Extension" },
     { value: "billing", href: "/dashboard/billing", label: "Nạp tiền" },
   ];
 

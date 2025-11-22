@@ -20,12 +20,25 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: st
 }
 
 async function proxy(req: NextRequest, path: string[]) {
-  const session = (await getServerSession(authOptions as any)) as any
-  const token = session?.accessToken
+  // Check if request already has Authorization header (from Chrome Extension)
+  // If yes, use it; otherwise use session token (for Next.js frontend)
+  const requestAuthHeader = req.headers.get('authorization')
+  let token: string | null = null
+
+  if (requestAuthHeader && requestAuthHeader.startsWith('Bearer ')) {
+    // Use token from request header (Chrome Extension API key)
+    token = requestAuthHeader.substring(7) // Remove 'Bearer ' prefix
+    console.log('[proxy] Using token from request header (Chrome Extension)')
+  } else {
+    // Use session token (Next.js frontend)
+    const session = (await getServerSession(authOptions as any)) as any
+    token = session?.accessToken
+    console.log('[proxy] Using token from session (Next.js frontend)')
+  }
 
   if (!token) {
     console.error('[proxy] missing access token', { path })
-    return NextResponse.json({ message: 'Missing access token in session' }, { status: 401 })
+    return NextResponse.json({ message: 'Missing access token' }, { status: 401 })
   }
 
   const baseUrl =
