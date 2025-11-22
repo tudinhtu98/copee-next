@@ -49,7 +49,7 @@ export const authOptions = {
         }
 
         const data = await response.json();
-        if (!data?.access_token) {
+        if (!data?.access_token || !data?.refresh_token) {
           throw new Error("Phản hồi từ API không hợp lệ");
         }
 
@@ -59,6 +59,7 @@ export const authOptions = {
           id: payload?.sub ?? "me",
           name: payload?.username ?? credentials?.email ?? "user",
           token: data.access_token,
+          refreshToken: data.refresh_token,
           role: payload?.role,
           username: payload?.username,
         } as any;
@@ -67,9 +68,11 @@ export const authOptions = {
   ],
   session: { strategy: "jwt" as const },
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, trigger }: any) {
+      // Khi đăng nhập lần đầu
       if (user) {
         token.accessToken = (user as any).token;
+        token.refreshToken = (user as any).refreshToken;
         if ((user as any).role) token.role = (user as any).role;
         if ((user as any).username) token.username = (user as any).username;
         if (!(token as any).role || !(token as any).username) {
@@ -79,7 +82,52 @@ export const authOptions = {
             token.username = payload.username;
           }
         }
+        return token;
       }
+
+      // Kiểm tra token có sắp hết hạn không (trong vòng 5 phút)
+      if ((token as any).accessToken) {
+        const payload = decodeJwtPayload((token as any).accessToken);
+        if (payload && payload.exp) {
+          const expiresAt = payload.exp * 1000; // Convert to milliseconds
+          const now = Date.now();
+          const timeUntilExpiry = expiresAt - now;
+          
+          // Nếu token còn < 5 phút thì refresh
+          if (timeUntilExpiry < 5 * 60 * 1000 && (token as any).refreshToken) {
+            try {
+              const baseUrl =
+                process.env.API_BASE_URL?.replace(/\/$/, "") ||
+                process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+
+              if (baseUrl) {
+                const response = await fetch(baseUrl + "/auth/refresh", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    refresh_token: (token as any).refreshToken,
+                  }),
+                });
+
+                if (response.ok) {
+                  const data = await response.json();
+                  token.accessToken = data.access_token;
+                  token.refreshToken = data.refresh_token;
+                } else {
+                  // Refresh token không hợp lệ, xóa token
+                  token.accessToken = null;
+                  token.refreshToken = null;
+                }
+              }
+            } catch (error) {
+              console.error("Error refreshing token:", error);
+              token.accessToken = null;
+              token.refreshToken = null;
+            }
+          }
+        }
+      }
+
       // ensure role if accessToken already exists
       if ((token as any).accessToken && !(token as any).role) {
         const payload = decodeJwtPayload((token as any).accessToken);
@@ -88,10 +136,12 @@ export const authOptions = {
           token.username = payload.username;
         }
       }
+      
       return token;
     },
     async session({ session, token }: any) {
       (session as any).accessToken = (token as any).accessToken;
+      (session as any).refreshToken = (token as any).refreshToken;
       (session as any).user = {
         ...(session as any).user,
         role: (token as any).role,

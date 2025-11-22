@@ -1,24 +1,56 @@
 import { signOut } from 'next-auth/react';
 
 /**
- * Helper function to handle 401 and auto logout
+ * Helper function to handle 401 and try to refresh token
  */
-async function handleUnauthorized(res: Response) {
+async function handleUnauthorized(res: Response, retryRequest?: () => Promise<Response>): Promise<Response | null> {
   if (res.status === 401 && typeof window !== 'undefined') {
+    try {
+      // Thử refresh token qua API route
+      const refreshResponse = await fetch('/api/auth/refresh', {
+        method: 'POST',
+        cache: 'no-store',
+      });
+
+      if (refreshResponse.ok) {
+        // Token đã được refresh, retry request gốc
+        if (retryRequest) {
+          return await retryRequest();
+        }
+        // Nếu không có retry function, reload page để lấy token mới
+        window.location.reload();
+        return null;
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+    }
+
+    // Nếu không thể refresh, logout
     await signOut({ callbackUrl: '/login' });
     throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
   }
+  return null;
 }
 
 /**
- * Shared fetcher function with automatic logout on 401
+ * Shared fetcher function with automatic token refresh on 401
  * Use this for all API calls to /api/proxy
  */
 export async function fetcher<T>(url: string): Promise<T> {
-  const res = await fetch('/api/proxy' + url, { cache: 'no-store' });
+  let res = await fetch('/api/proxy' + url, { cache: 'no-store' });
   
-  // Auto logout on 401 (unauthorized)
-  await handleUnauthorized(res);
+  // Nếu 401, thử refresh token và retry
+  if (res.status === 401) {
+    const retriedRes = await handleUnauthorized(res, async () => {
+      return await fetch('/api/proxy' + url, { cache: 'no-store' });
+    });
+    if (retriedRes) {
+      res = retriedRes;
+    } else {
+      // Đã reload page hoặc logout
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+  }
   
   if (!res.ok) {
     const text = await res.text();
@@ -34,20 +66,33 @@ export async function fetcher<T>(url: string): Promise<T> {
 }
 
 /**
- * Wrapper for fetch calls to /api/proxy with automatic logout on 401
+ * Wrapper for fetch calls to /api/proxy with automatic token refresh on 401
  * Use this for direct fetch calls (POST, PUT, DELETE, etc.)
  */
 export async function apiFetch(
   url: string,
   options?: RequestInit
 ): Promise<Response> {
-  const res = await fetch('/api/proxy' + url, {
+  let res = await fetch('/api/proxy' + url, {
     ...options,
     cache: 'no-store',
   });
   
-  // Auto logout on 401 (unauthorized)
-  await handleUnauthorized(res);
+  // Nếu 401, thử refresh token và retry
+  if (res.status === 401) {
+    const retriedRes = await handleUnauthorized(res, async () => {
+      return await fetch('/api/proxy' + url, {
+        ...options,
+        cache: 'no-store',
+      });
+    });
+    if (retriedRes) {
+      res = retriedRes;
+    } else {
+      // Đã reload page hoặc logout
+      throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+    }
+  }
   
   return res;
 }

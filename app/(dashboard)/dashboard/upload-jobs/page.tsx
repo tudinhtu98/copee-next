@@ -65,7 +65,7 @@ export default function UploadJobsPage() {
   const siteId = searchParams.get("siteId") || "";
 
   const { data, error, isLoading, mutate } = useSWR<UploadJobsResponse>(
-    `/api/proxy/products/upload-jobs?page=${page}&limit=${limit}${status ? `&status=${status}` : ""}${siteId ? `&siteId=${siteId}` : ""}`,
+    `/products/upload-jobs?page=${page}&limit=${limit}${status ? `&status=${status}` : ""}${siteId ? `&siteId=${siteId}` : ""}`,
     fetcher,
     {
       refreshInterval: 5000, // Auto-refresh every 5 seconds
@@ -277,7 +277,7 @@ export default function UploadJobsPage() {
 
 
   // Fetch sites for filter
-  const { data: sitesData } = useSWR("/api/proxy/sites", fetcher);
+  const { data: sitesData } = useSWR("/sites", fetcher);
   const sites = sitesData || [];
 
   return (
