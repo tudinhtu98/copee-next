@@ -13,19 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-const fetcher = async <T,>(url: string): Promise<T> => {
-  const res = await fetch("/api/proxy" + url, { cache: "no-store" });
-  if (!res.ok) {
-    const text = await res.text();
-    try {
-      const parsed = JSON.parse(text);
-      throw new Error(parsed.message || "Không thể tải dữ liệu");
-    } catch {
-      throw new Error("Không thể tải dữ liệu");
-    }
-  }
-  return (await res.json()) as T;
-};
+import { fetcher } from '@/src/lib/fetcher';
 
 type Site = {
   id: string;
@@ -147,7 +135,7 @@ export default function SettingsPage() {
     if (!editingWooKeys.siteId) return;
     try {
       setIsSavingWooKeys(true);
-      const res = await fetch(`/api/proxy/sites/${editingWooKeys.siteId}`, {
+      const res = await apiFetch(`/sites/${editingWooKeys.siteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -190,7 +178,7 @@ export default function SettingsPage() {
     if (!editingShopeeAffiliate.siteId) return;
     try {
       setIsSavingShopeeAffiliate(true);
-      const res = await fetch(`/api/proxy/sites/${editingShopeeAffiliate.siteId}`, {
+      const res = await apiFetch(`/sites/${editingShopeeAffiliate.siteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -226,7 +214,7 @@ export default function SettingsPage() {
       return;
     }
     try {
-      const res = await fetch(`/api/proxy/sites/${deleteConfirm.siteId}`, { method: "DELETE" });
+      const res = await apiFetch(`/sites/${deleteConfirm.siteId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res
           .json()
@@ -252,7 +240,7 @@ export default function SettingsPage() {
     if (!editingWpAuth.siteId) return;
     try {
       setIsSavingWpAuth(true);
-      const res = await fetch(`/api/proxy/sites/${editingWpAuth.siteId}`, {
+      const res = await apiFetch(`/sites/${editingWpAuth.siteId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -276,7 +264,7 @@ export default function SettingsPage() {
   async function onTestConnection(siteId: string) {
     try {
       setTestingSiteId(siteId);
-      const res = await fetch(`/api/proxy/sites/${siteId}/test-connection`, {
+      const res = await apiFetch(`/sites/${siteId}/test-connection`, {
         method: "POST",
       });
       if (!res.ok) {

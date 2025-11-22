@@ -34,19 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 
-const fetcher = async <T,>(url: string): Promise<T> => {
-  const res = await fetch("/api/proxy" + url, { cache: "no-store" });
-  if (!res.ok) {
-    const text = await res.text();
-    try {
-      const parsed = JSON.parse(text);
-      throw new Error(parsed.message || "Không thể tải dữ liệu");
-    } catch {
-      throw new Error("Không thể tải dữ liệu");
-    }
-  }
-  return (await res.json()) as T;
-};
+import { fetcher, apiFetch } from '@/src/lib/fetcher';
 
 const statusDisplay: Record<
   string,
@@ -307,7 +295,7 @@ export default function ProductsPage() {
   async function onProcessUploads() {
     try {
       setIsProcessing(true);
-      const res = await fetch("/api/proxy/products/process-uploads", {
+      const res = await apiFetch("/products/process-uploads", {
         method: "POST",
       });
       if (!res.ok) {

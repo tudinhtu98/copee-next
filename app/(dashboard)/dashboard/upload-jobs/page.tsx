@@ -50,7 +50,7 @@ type UploadJobsResponse = {
   };
 };
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { fetcher } from '@/src/lib/fetcher';
 
 export default function UploadJobsPage() {
   const router = useRouter();

@@ -5,19 +5,7 @@ import useSWR from 'swr'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-const fetcher = async <T,>(url: string): Promise<T> => {
-  const res = await fetch('/api/proxy' + url, { cache: 'no-store' })
-  if (!res.ok) {
-    const text = await res.text()
-    try {
-      const parsed = JSON.parse(text)
-      throw new Error(parsed.message || 'Không thể tải dữ liệu')
-    } catch {
-      throw new Error('Không thể tải dữ liệu')
-    }
-  }
-  return (await res.json()) as T
-}
+import { fetcher } from '@/src/lib/fetcher'
 
 type BalanceResponse = {
   balance: number
