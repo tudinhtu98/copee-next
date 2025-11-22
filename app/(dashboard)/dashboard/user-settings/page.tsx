@@ -273,7 +273,7 @@ export default function UserSettingsPage() {
             </TableBody>
           </Table>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-yellow-600 dark:text-yellow-500">
             Chưa có API key nào. Tạo API key mới để sử dụng với Chrome Extension.
           </p>
         )}
