@@ -211,7 +211,7 @@ export default function AdminHome() {
                     : 0}
                   %
                 </span>
-              </div>
+        </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
                 <div
                   className="bg-green-600 h-2 rounded-full"
@@ -223,7 +223,7 @@ export default function AdminHome() {
                     }%`,
                   }}
                 />
-              </div>
+        </div>
         </div>
           </CardContent>
         </Card>
