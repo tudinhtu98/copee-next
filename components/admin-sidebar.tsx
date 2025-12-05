@@ -12,14 +12,20 @@ export default function AdminSidebar() {
   const getCurrentTab = () => {
     if (pathname === "/admin") return "overview";
     if (pathname.startsWith("/admin/users")) return "users";
+    if (pathname.startsWith("/admin/sites")) return "sites";
+    if (pathname.startsWith("/admin/categories")) return "categories";
+    if (pathname.startsWith("/admin/products")) return "products";
     if (pathname.startsWith("/admin/stats")) return "stats";
     return "overview";
   };
 
   const navItems = [
-    { value: "overview", href: "/admin", label: "Thống kê" },
-    { value: "users", href: "/admin/users", label: "Quản lý user" },
+    { value: "overview", href: "/admin", label: "Tổng quan" },
     { value: "stats", href: "/admin/stats", label: "Top thống kê" },
+    { value: "users", href: "/admin/users", label: "Quản lý user" },
+    { value: "sites", href: "/admin/sites", label: "Quản lý Site" },
+    { value: "categories", href: "/admin/categories", label: "Quản lý danh mục" },
+    { value: "products", href: "/admin/products", label: "Quản lý sản phẩm" },
   ];
 
   return (

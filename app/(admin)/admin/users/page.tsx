@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import useSWR from "swr";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -73,9 +73,12 @@ const roleDisplay: Record<
 };
 
 export default function AdminUsers() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const page = parseInt(searchParams.get("page") || "1", 10);
   const search = searchParams.get("search") || "";
+  const [searchInput, setSearchInput] = useState(search);
   const { data: session } = useSession() as any;
   const currentUserRole = session?.user?.role as "USER" | "MOD" | "ADMIN" | undefined;
   const isMod = currentUserRole === "MOD";
@@ -267,11 +270,41 @@ export default function AdminUsers() {
     setIsEditDialogOpen(true);
   };
 
+  // Update search in URL
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (searchInput) {
+        params.set("search", searchInput);
+      } else {
+        params.delete("search");
+      }
+      params.set("page", "1");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput, router, pathname, searchParams]);
+
+  // Sync searchInput with URL search param
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
       <h1 className="text-2xl font-semibold">Quản lý user</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>Thêm user</Button>
+      </div>
+
+      {/* Search Input */}
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Tìm kiếm theo email hoặc username..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="max-w-sm"
+        />
       </div>
 
       {error && (
