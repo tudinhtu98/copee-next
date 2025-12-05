@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { fetcher } from "@/src/lib/fetcher";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, XIcon } from "lucide-react";
 
 type Site = {
   id: string;
@@ -109,6 +109,14 @@ export default function AdminSites() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleClearFilters = () => {
+    setSearchInput("");
+    // Reset all filters by navigating to clean URL
+    router.replace(pathname);
+  };
+
+  const hasActiveFilters = search || userIdFilter;
+
   const sites = data?.sites || [];
   const pagination = data?.pagination;
 
@@ -118,13 +126,25 @@ export default function AdminSites() {
 
       {/* Search and Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Input
-          placeholder="Tìm kiếm theo tên hoặc URL..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm">
+          <Input
+            placeholder="Tìm kiếm theo tên hoặc URL..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pr-8"
+          />
+          {searchInput.trim() && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Select
+          key={`user-${userIdFilter || "none"}`}
           value={userIdFilter || undefined}
           onValueChange={(value) => handleFilterChange("userId", value === "all" ? "" : value)}
         >
@@ -140,6 +160,16 @@ export default function AdminSites() {
             ))}
           </SelectContent>
         </Select>
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            className="whitespace-nowrap border-destructive text-destructive hover:bg-destructive/10"
+          >
+            <XIcon className="mr-2 h-4 w-4" />
+            Bỏ lọc
+          </Button>
+        )}
       </div>
 
       {error && (

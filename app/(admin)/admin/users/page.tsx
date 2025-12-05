@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetcher, apiFetch } from "@/src/lib/fetcher";
+import { XIcon } from "lucide-react";
 
 type User = {
   id: string;
@@ -299,12 +300,23 @@ export default function AdminUsers() {
 
       {/* Search Input */}
       <div className="flex items-center gap-2">
-        <Input
-          placeholder="Tìm kiếm theo email hoặc username..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm">
+          <Input
+            placeholder="Tìm kiếm theo email hoặc username..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pr-8"
+          />
+          {searchInput.trim() && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (

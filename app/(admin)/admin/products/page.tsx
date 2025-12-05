@@ -22,7 +22,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fetcher } from "@/src/lib/fetcher";
-import { ExternalLinkIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ExternalLinkIcon, SearchIcon, CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const statusDisplay: Record<
   string,
@@ -72,6 +78,8 @@ export default function AdminProducts() {
   const categoryFilter = searchParams.get("category") || "";
   const userIdFilter = searchParams.get("userId") || "";
   const [searchInput, setSearchInput] = useState(search);
+  const [categoryOpen, setCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState("");
 
   // Fetch users and categories for filters
   const { data: usersData } = useSWR<{ users: Array<{ id: string; email: string; username: string | null }> }>(
@@ -135,6 +143,16 @@ export default function AdminProducts() {
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  const handleClearFilters = () => {
+    setSearchInput("");
+    setCategorySearch("");
+    setCategoryOpen(false);
+    // Reset all filters by navigating to clean URL
+    router.replace(pathname);
+  };
+
+  const hasActiveFilters = search || statusFilter || categoryFilter || userIdFilter;
+
   const products = data?.products || [];
   const pagination = data?.pagination;
 
@@ -144,13 +162,25 @@ export default function AdminProducts() {
 
       {/* Search and Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:flex-wrap">
-        <Input
-          placeholder="Tìm kiếm theo tên, mô tả, danh mục..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm">
+          <Input
+            placeholder="Tìm kiếm theo tên, mô tả, danh mục..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pr-8"
+          />
+          {searchInput.trim() && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
         <Select
+          key={`status-${statusFilter || "none"}`}
           value={statusFilter || undefined}
           onValueChange={(value) => handleFilterChange("status", value === "all" ? "" : value)}
         >
@@ -166,23 +196,98 @@ export default function AdminProducts() {
             ))}
           </SelectContent>
         </Select>
+        <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              className="w-[200px] justify-between"
+            >
+              <span className="truncate flex-1 text-left">
+                {categoryFilter
+                  ? categories.find((cat) => cat.category === categoryFilter)?.category || "Chọn danh mục"
+                  : "Lọc theo danh mục"}
+              </span>
+              <ChevronDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[200px] p-0">
+            <div className="flex items-center border-b px-3">
+              <SearchIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+              <Input
+                placeholder="Tìm danh mục..."
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                className="border-0 focus-visible:ring-0"
+              />
+            </div>
+            <div className="max-h-[300px] overflow-auto p-1">
+              <div
+                className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                onClick={() => {
+                  handleFilterChange("category", "");
+                  setCategoryOpen(false);
+                  setCategorySearch("");
+                }}
+              >
+                <CheckIcon
+                  className={cn(
+                    "mr-2 h-4 w-4",
+                    !categoryFilter ? "opacity-100" : "opacity-0"
+                  )}
+                />
+                Tất cả danh mục
+              </div>
+              {categories
+                .filter((cat) => {
+                  if (!categorySearch) return true;
+                  const searchLower = categorySearch.toLowerCase();
+                  const catLower = cat.category.toLowerCase();
+                  // Simple Vietnamese diacritics removal for client-side search
+                  const removeDiacritics = (str: string) => {
+                    return str
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+                      .toLowerCase();
+                  };
+                  return (
+                    catLower.includes(searchLower) ||
+                    removeDiacritics(cat.category).includes(removeDiacritics(categorySearch))
+                  );
+                })
+                .map((cat) => (
+                  <div
+                    key={cat.category}
+                    className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => {
+                      handleFilterChange("category", cat.category);
+                      setCategoryOpen(false);
+                      setCategorySearch("");
+                    }}
+                  >
+                    <CheckIcon
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        categoryFilter === cat.category ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {cat.category}
+                  </div>
+                ))}
+              {categories.filter((cat) =>
+                categorySearch
+                  ? cat.category.toLowerCase().includes(categorySearch.toLowerCase())
+                  : true
+              ).length === 0 && (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Không tìm thấy danh mục
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
         <Select
-          value={categoryFilter || undefined}
-          onValueChange={(value) => handleFilterChange("category", value === "all" ? "" : value)}
-        >
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Lọc theo danh mục" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tất cả danh mục</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat.category} value={cat.category}>
-                {cat.category}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
+          key={`user-${userIdFilter || "none"}`}
           value={userIdFilter || undefined}
           onValueChange={(value) => handleFilterChange("userId", value === "all" ? "" : value)}
         >
@@ -198,6 +303,16 @@ export default function AdminProducts() {
             ))}
           </SelectContent>
         </Select>
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            className="whitespace-nowrap border-destructive text-destructive hover:bg-destructive/10"
+          >
+            <XIcon className="mr-2 h-4 w-4" />
+            Bỏ lọc
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -240,7 +355,16 @@ export default function AdminProducts() {
                       </TableCell>
                       <TableCell>
                         {product.category ? (
-                          <Badge variant="outline">{product.category}</Badge>
+                          <Badge
+                            variant="outline"
+                            className="cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleFilterChange("category", product.category || "");
+                            }}
+                          >
+                            {product.category}
+                          </Badge>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}

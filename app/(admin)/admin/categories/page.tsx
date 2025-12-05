@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fetcher } from "@/src/lib/fetcher";
+import { XIcon } from "lucide-react";
 
 type Category = {
   category: string;
@@ -83,12 +84,23 @@ export default function AdminCategories() {
 
       {/* Search */}
       <div className="flex items-center gap-2">
-        <Input
-          placeholder="Tìm kiếm theo tên danh mục..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="relative max-w-sm">
+          <Input
+            placeholder="Tìm kiếm theo tên danh mục..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="pr-8"
+          />
+          {searchInput.trim() && (
+            <button
+              type="button"
+              onClick={() => setSearchInput("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <XIcon className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {error && (
