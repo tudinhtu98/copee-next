@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,14 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 import { fetcher } from '@/src/lib/fetcher';
 
@@ -27,7 +35,7 @@ type Transaction = {
 
 export default function BillingHistoryPage() {
   const [page, setPage] = useState(1);
-  const [typeFilter, setTypeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -36,7 +44,7 @@ export default function BillingHistoryPage() {
     const params = new URLSearchParams({
       page: String(page),
       limit: "20",
-      ...(typeFilter && { type: typeFilter }),
+      ...(typeFilter && typeFilter !== "all" && { type: typeFilter }),
       ...(startDate && { startDate }),
       ...(endDate && { endDate }),
     });
@@ -75,48 +83,68 @@ export default function BillingHistoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="grid gap-3 sm:grid-cols-4">
-        <select
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-          value={typeFilter}
-          onChange={(e) => {
-            setTypeFilter(e.target.value);
-            setPage(1);
-          }}
-        >
-          <option value="">Tất cả loại</option>
-          <option value="CREDIT">Nạp tiền</option>
-          <option value="DEBIT">Trừ tiền</option>
-        </select>
-        <Input
-          type="date"
-          placeholder="Từ ngày"
-          value={startDate}
-          onChange={(e) => {
-            setStartDate(e.target.value);
-            setPage(1);
-          }}
-        />
-        <Input
-          type="date"
-          placeholder="Đến ngày"
-          value={endDate}
-          onChange={(e) => {
-            setEndDate(e.target.value);
-            setPage(1);
-          }}
-        />
-        <Button
-          variant="outline"
-          onClick={() => {
-            setTypeFilter("");
-            setStartDate("");
-            setEndDate("");
-            setPage(1);
-          }}
-        >
-          Xóa bộ lọc
-        </Button>
+      <div className="rounded-md border p-4 space-y-4">
+        <h2 className="text-lg font-semibold">Bộ lọc</h2>
+        <div className="grid gap-4 sm:grid-cols-4">
+          <div className="space-y-2">
+            <Label htmlFor="type-filter">Loại giao dịch</Label>
+            <Select
+              value={typeFilter || undefined}
+              onValueChange={(value) => {
+                setTypeFilter(value || "");
+                setPage(1);
+              }}
+            >
+              <SelectTrigger id="type-filter" className="w-full">
+                <SelectValue placeholder="Tất cả loại" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                <SelectItem value="CREDIT">Nạp tiền</SelectItem>
+                <SelectItem value="DEBIT">Trừ tiền</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="start-date">Từ ngày</Label>
+            <Input
+              id="start-date"
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="end-date">Đến ngày</Label>
+            <Input
+              id="end-date"
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>&nbsp;</Label>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setTypeFilter("all");
+                setStartDate("");
+                setEndDate("");
+                setPage(1);
+              }}
+            >
+              Xóa bộ lọc
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Transactions Table */}

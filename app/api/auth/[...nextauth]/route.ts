@@ -120,7 +120,6 @@ export const authOptions = {
                 }
               }
             } catch (error) {
-              console.error("Error refreshing token:", error);
               token.accessToken = null;
               token.refreshToken = null;
             }

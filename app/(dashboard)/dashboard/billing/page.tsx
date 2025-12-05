@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import useSWR from 'swr'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
@@ -50,11 +51,16 @@ export default function BillingPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">Nạp tiền</h1>
-        <p className="text-sm text-muted-foreground">
-          Số dư sẽ được sử dụng để trừ mỗi khi upload sản phẩm thành công.
-        </p>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Nạp tiền</h1>
+          <p className="text-sm text-muted-foreground">
+            Số dư sẽ được sử dụng để trừ mỗi khi upload sản phẩm thành công.
+          </p>
+        </div>
+        <Link href="/dashboard/billing/history">
+          <Button variant="outline">Xem lịch sử giao dịch</Button>
+        </Link>
       </div>
       <div className="rounded-md border p-4 space-y-3">
         <div className="text-lg font-semibold">

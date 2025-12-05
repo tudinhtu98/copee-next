@@ -30,7 +30,7 @@ export default function DashboardSidebar() {
     { value: "categories", href: "/dashboard/categories", label: "Danh mục" },
     { value: "settings", href: "/dashboard/settings", label: "Cài đặt WordPress" },
     { value: "user-settings", href: "/dashboard/user-settings", label: "API Key cho Extension" },
-    { value: "billing", href: "/dashboard/billing", label: "Nạp tiền" },
+    { value: "billing", href: "/dashboard/billing", label: "Nạp tiền & Lịch sử" },
   ];
 
   if (role === "ADMIN" || role === "MOD") {

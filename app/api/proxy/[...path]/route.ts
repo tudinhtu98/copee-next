@@ -2,20 +2,44 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '../../auth/[...nextauth]/route'
 
-export async function GET(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params
+type RouteContext = {
+  params: Promise<{ path: string[] }> | { path: string[] }
+}
+
+async function getPath(ctx: RouteContext): Promise<string[]> {
+  const params = ctx.params instanceof Promise ? await ctx.params : ctx.params
+  return params.path
+}
+
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+) {
+  const path = await getPath(ctx)
   return proxy(req, path)
 }
-export async function POST(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params
+
+export async function POST(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+) {
+  const path = await getPath(ctx)
   return proxy(req, path)
 }
-export async function PATCH(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params
+
+export async function PATCH(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+) {
+  const path = await getPath(ctx)
   return proxy(req, path)
 }
-export async function DELETE(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
-  const { path } = await ctx.params
+
+export async function DELETE(
+  req: NextRequest,
+  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+) {
+  const path = await getPath(ctx)
   return proxy(req, path)
 }
 
@@ -28,12 +52,10 @@ async function proxy(req: NextRequest, path: string[]) {
   if (requestAuthHeader && requestAuthHeader.startsWith('Bearer ')) {
     // Use token from request header (Chrome Extension API key)
     token = requestAuthHeader.substring(7) // Remove 'Bearer ' prefix
-    console.log('[proxy] Using token from request header (Chrome Extension)')
   } else {
     // Use session token (Next.js frontend)
     const session = (await getServerSession(authOptions as any)) as any
     token = session?.accessToken
-    console.log('[proxy] Using token from session (Next.js frontend)')
   }
 
   if (!token) {
@@ -63,13 +85,6 @@ async function proxy(req: NextRequest, path: string[]) {
   })
 
   const text = await res.text()
-
-  if (!res.ok) {
-    console.error('[proxy] upstream returned error', {
-      status: res.status,
-      body: text,
-    })
-  }
 
   return new NextResponse(text, {
     status: res.status,

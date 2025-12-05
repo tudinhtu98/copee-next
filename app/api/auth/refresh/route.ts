@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
       refresh_token: data.refresh_token,
     });
   } catch (error: any) {
-    console.error('Error refreshing token:', error);
     return NextResponse.json(
       { message: error.message || 'Lỗi khi refresh token' },
       { status: 500 }
