@@ -58,6 +58,7 @@ export const authOptions = {
         return {
           id: payload?.sub ?? "me",
           name: payload?.username ?? credentials?.email ?? "user",
+          email: payload?.email ?? credentials?.email,
           token: data.access_token,
           refreshToken: data.refresh_token,
           role: payload?.role,
@@ -73,11 +74,13 @@ export const authOptions = {
       if (user) {
         token.accessToken = (user as any).token;
         token.refreshToken = (user as any).refreshToken;
+        if ((user as any).email) token.email = (user as any).email;
         if ((user as any).role) token.role = (user as any).role;
         if ((user as any).username) token.username = (user as any).username;
-        if (!(token as any).role || !(token as any).username) {
+        if (!(token as any).role || !(token as any).username || !(token as any).email) {
           const payload = decodeJwtPayload((user as any).token);
           if (payload) {
+            token.email = payload.email;
             token.role = payload.role;
             token.username = payload.username;
           }
@@ -127,10 +130,11 @@ export const authOptions = {
         }
       }
 
-      // ensure role if accessToken already exists
-      if ((token as any).accessToken && !(token as any).role) {
+      // ensure role, username, email if accessToken already exists
+      if ((token as any).accessToken && (!(token as any).role || !(token as any).email)) {
         const payload = decodeJwtPayload((token as any).accessToken);
         if (payload) {
+          token.email = payload.email;
           token.role = payload.role;
           token.username = payload.username;
         }
@@ -141,8 +145,13 @@ export const authOptions = {
     async session({ session, token }: any) {
       (session as any).accessToken = (token as any).accessToken;
       (session as any).refreshToken = (token as any).refreshToken;
+
+      // Decode access token để lấy email từ JWT payload
+      const payload = decodeJwtPayload((token as any).accessToken);
+
       (session as any).user = {
         ...(session as any).user,
+        email: session?.user?.email || payload?.email || token?.email,
         role: (token as any).role,
         username: (token as any).username,
       };

@@ -17,8 +17,8 @@ export default function DashboardSidebar() {
     if (pathname.startsWith("/dashboard/products")) return "products";
     if (pathname.startsWith("/dashboard/upload-jobs")) return "upload-jobs";
     if (pathname.startsWith("/dashboard/categories")) return "categories";
-    if (pathname.startsWith("/dashboard/settings")) return "settings";
-    if (pathname.startsWith("/dashboard/user-settings")) return "user-settings";
+    if (pathname.startsWith("/dashboard/site-settings")) return "site-settings";
+    if (pathname.startsWith("/dashboard/api-keys")) return "api-keys";
     if (pathname.startsWith("/dashboard/billing")) return "billing";
     return "overview";
   };
@@ -28,8 +28,8 @@ export default function DashboardSidebar() {
     { value: "products", href: "/dashboard/products", label: "Sản phẩm" },
     { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Xử lý Upload" },
     { value: "categories", href: "/dashboard/categories", label: "Danh mục" },
-    { value: "settings", href: "/dashboard/settings", label: "Cài đặt WordPress" },
-    { value: "user-settings", href: "/dashboard/user-settings", label: "API Key cho Extension" },
+    { value: "site-settings", href: "/dashboard/site-settings", label: "Cài đặt WordPress" },
+    { value: "api-keys", href: "/dashboard/api-keys", label: "API Key cho Extension" },
     { value: "billing", href: "/dashboard/billing", label: "Nạp tiền & Lịch sử" },
   ];
 

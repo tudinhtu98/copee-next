@@ -1,7 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -43,8 +42,7 @@ type CreateApiKeyResponse = {
   createdAt: string;
 };
 
-export default function UserSettingsPage() {
-  const { data: session } = useSession() as any;
+export default function ApiKeysPage() {
   const [copied, setCopied] = useState(false);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
@@ -129,9 +127,9 @@ export default function UserSettingsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold">API Key cho Extension</h1>
+        <h1 className="text-2xl font-semibold">API Keys cho Extension</h1>
         <p className="text-sm text-muted-foreground">
-          Tạo và quản lý API Key để sử dụng với Chrome Extension
+          Tạo và quản lý API Keys để sử dụng với Chrome Extension
         </p>
       </div>
 
@@ -139,9 +137,9 @@ export default function UserSettingsPage() {
       <div className="rounded-md border p-6 space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-lg font-semibold">API Keys</h2>
+            <h2 className="text-lg font-semibold">Danh sách API Keys</h2>
             <p className="text-sm text-muted-foreground">
-              Tạo API keys để sử dụng với Chrome Extension. API keys có thời gian hết hạn dài hơn access token.
+              API keys có thời gian hết hạn dài hơn access token. Sử dụng để xác thực với Chrome Extension.
             </p>
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -277,25 +275,6 @@ export default function UserSettingsPage() {
             Chưa có API key nào. Tạo API key mới để sử dụng với Chrome Extension.
           </p>
         )}
-      </div>
-
-      {/* Account Info */}
-      <div className="rounded-md border p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Thông tin tài khoản</h2>
-        <div className="space-y-2">
-          <div>
-            <label className="text-sm text-muted-foreground">Email</label>
-            <div className="font-medium">{session?.user?.email || "-"}</div>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Username</label>
-            <div className="font-medium">{session?.user?.username || "-"}</div>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Vai trò</label>
-            <div className="font-medium">{session?.user?.role || "-"}</div>
-          </div>
-        </div>
       </div>
     </div>
   );

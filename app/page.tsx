@@ -26,7 +26,7 @@ export default async function Home() {
               Đăng nhập
             </Link>
           )}
-          {session && (
+          {session && role === "USER" &&(
             <Link className="rounded-md border px-4 py-2" href="/dashboard">
               Vào Dashboard
             </Link>

@@ -111,11 +111,11 @@ export default function AppHeader() {
                     )}
                     <DropdownMenuItem asChild>
                       <Link
-                        href="/dashboard/user-settings"
+                        href="/settings"
                         className="cursor-pointer"
                       >
                         <Settings className="mr-2 h-4 w-4" />
-                        Cài đặt
+                        Cài đặt tài khoản
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -179,12 +179,12 @@ export default function AppHeader() {
             </Link>
           )}
           <Link
-            href="/dashboard/user-settings"
+            href="/settings"
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent transition-colors"
             onClick={() => setMobileMenuOpen(false)}
           >
             <Settings className="h-4 w-4" />
-            Cài đặt
+            Cài đặt tài khoản
           </Link>
           <div className="px-3 py-2">
             <div className="flex items-center gap-2 mb-2">

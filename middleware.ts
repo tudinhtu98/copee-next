@@ -5,6 +5,17 @@ import { getToken } from 'next-auth/jwt'
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
+  // Protect settings: require any logged-in user
+  if (pathname.startsWith('/settings')) {
+    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }) as any
+    if (!token) {
+      const url = new URL('/login', req.url)
+      url.searchParams.set('next', '/settings')
+      return NextResponse.redirect(url)
+    }
+    return NextResponse.next()
+  }
+
   // Protect admin area: require role ADMIN or MOD
   if (pathname.startsWith('/admin')) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }) as any
@@ -40,7 +51,7 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/dashboard/:path*'],
+  matcher: ['/settings/:path*', '/admin/:path*', '/dashboard/:path*'],
 }
 
 
