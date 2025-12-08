@@ -15,6 +15,7 @@ export default function AdminSidebar() {
     if (pathname.startsWith("/admin/sites")) return "sites";
     if (pathname.startsWith("/admin/categories")) return "categories";
     if (pathname.startsWith("/admin/products")) return "products";
+    if (pathname.startsWith("/admin/audit-logs")) return "audit-logs";
     if (pathname.startsWith("/admin/stats")) return "stats";
     return "overview";
   };
@@ -26,6 +27,7 @@ export default function AdminSidebar() {
     { value: "sites", href: "/admin/sites", label: "Quản lý Site" },
     { value: "categories", href: "/admin/categories", label: "Quản lý danh mục" },
     { value: "products", href: "/admin/products", label: "Quản lý sản phẩm" },
+    { value: "audit-logs", href: "/admin/audit-logs", label: "Nhật ký hoạt động" },
   ];
 
   return (
