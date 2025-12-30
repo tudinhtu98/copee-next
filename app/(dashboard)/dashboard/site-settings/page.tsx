@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { fetcher } from '@/src/lib/fetcher';
+import { fetcher, apiFetch } from '@/src/lib/fetcher';
 
 type Site = {
   id: string;
