@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,12 @@ type UploadJobsResponse = {
     total: number;
     totalPages: number;
   };
+};
+
+type Site = {
+  id: string;
+  name: string;
+  baseUrl: string;
 };
 
 import { fetcher } from '@/src/lib/fetcher';
@@ -277,7 +285,7 @@ export default function UploadJobsPage() {
 
 
   // Fetch sites for filter
-  const { data: sitesData } = useSWR("/sites", fetcher);
+  const { data: sitesData } = useSWR<Site[]>("/sites", fetcher);
   const sites = sitesData || [];
 
   return (

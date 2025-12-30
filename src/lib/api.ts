@@ -8,7 +8,7 @@ api.interceptors.request.use(async (config) => {
     const session = await getSession()
     const token = (session as any)?.accessToken
     if (token) {
-      config.headers = { ...config.headers, Authorization: 'Bearer ' + token }
+      config.headers.Authorization = 'Bearer ' + token
     }
   }
   return config

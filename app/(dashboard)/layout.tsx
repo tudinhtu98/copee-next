@@ -1,5 +1,7 @@
 import DashboardSidebar from "@/components/dashboard-sidebar";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {

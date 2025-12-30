@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '../../auth/[...nextauth]/route'
+import { authOptions } from '@/lib/auth'
 
 type RouteContext = {
-  params: Promise<{ path: string[] }> | { path: string[] }
+  params: Promise<{ path: string[] }>
 }
 
 async function getPath(ctx: RouteContext): Promise<string[]> {
-  const params = ctx.params instanceof Promise ? await ctx.params : ctx.params
+  const params = await ctx.params
   return params.path
 }
 
 export async function GET(
   req: NextRequest,
-  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+  ctx: { params: Promise<{ path: string[] }> }
 ) {
   const path = await getPath(ctx)
   return proxy(req, path)
@@ -21,7 +21,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+  ctx: { params: Promise<{ path: string[] }> }
 ) {
   const path = await getPath(ctx)
   return proxy(req, path)
@@ -29,7 +29,7 @@ export async function POST(
 
 export async function PATCH(
   req: NextRequest,
-  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+  ctx: { params: Promise<{ path: string[] }> }
 ) {
   const path = await getPath(ctx)
   return proxy(req, path)
@@ -37,7 +37,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  ctx: { params: Promise<{ path: string[] }> | { path: string[] } }
+  ctx: { params: Promise<{ path: string[] }> }
 ) {
   const path = await getPath(ctx)
   return proxy(req, path)
