@@ -70,6 +70,13 @@ export const authOptions: AuthOptions = {
   ],
   session: { strategy: "jwt" as const },
   callbacks: {
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // Luôn sử dụng relative URL hoặc URL thuộc domain hiện tại
+      // Ngăn chặn redirect về localhost
+      if (url.startsWith("/")) return url;
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
     async jwt({ token, user, trigger }: any) {
       // Khi đăng nhập lần đầu
       if (user) {
@@ -161,5 +168,6 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: "/login",
+    signOut: "/",
   },
 };
