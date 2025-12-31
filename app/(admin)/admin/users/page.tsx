@@ -89,7 +89,11 @@ export default function AdminUsers() {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreditDialogOpen, setIsCreditDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [creditingUser, setCreditingUser] = useState<User | null>(null);
+  const [creditAmount, setCreditAmount] = useState("");
+  const [creditReference, setCreditReference] = useState("");
   const [formData, setFormData] = useState<UserFormValues>({
     email: "",
     username: "",
@@ -273,6 +277,48 @@ export default function AdminUsers() {
     setIsEditDialogOpen(true);
   };
 
+  const openCreditDialog = (user: User) => {
+    setCreditingUser(user);
+    setCreditAmount("");
+    setCreditReference("");
+    setIsCreditDialogOpen(true);
+  };
+
+  const handleCredit = useCallback(async () => {
+    if (!creditingUser) return;
+
+    const amount = parseInt(creditAmount);
+    if (!amount || amount <= 0) {
+      toast.error("Số tiền phải lớn hơn 0");
+      return;
+    }
+
+    try {
+      const res = await apiFetch(`/admin/users/${creditingUser.id}/credit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount,
+          reference: creditReference || "admin:manual-credit",
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Không thể nạp tiền");
+      }
+
+      toast.success(`Đã nạp ${new Intl.NumberFormat("vi-VN").format(amount)}₫ cho ${creditingUser.username}`);
+      setIsCreditDialogOpen(false);
+      setCreditingUser(null);
+      setCreditAmount("");
+      setCreditReference("");
+      mutate();
+    } catch (error: any) {
+      toast.error(error.message || "Không thể nạp tiền");
+    }
+  }, [creditingUser, creditAmount, creditReference, mutate]);
+
   // Update search in URL
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -377,6 +423,13 @@ export default function AdminUsers() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openCreditDialog(user)}
+                          >
+                            Nạp tiền
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -591,6 +644,48 @@ export default function AdminUsers() {
               Hủy
             </Button>
             <Button onClick={handleUpdate}>Cập nhật</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Credit Dialog */}
+      <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nạp tiền cho user</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md bg-muted p-3">
+              <p className="text-sm font-medium">User: {creditingUser?.username}</p>
+              <p className="text-sm text-muted-foreground">Email: {creditingUser?.email}</p>
+              <p className="text-sm text-muted-foreground">
+                Số dư hiện tại: {creditingUser ? new Intl.NumberFormat("vi-VN").format(creditingUser.balance) : 0}₫
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Số tiền nạp (₫)</label>
+              <Input
+                type="number"
+                value={creditAmount}
+                onChange={(e) => setCreditAmount(e.target.value)}
+                placeholder="100000"
+                min="1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Ghi chú (tùy chọn)</label>
+              <Input
+                value={creditReference}
+                onChange={(e) => setCreditReference(e.target.value)}
+                placeholder="admin:manual-credit"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreditDialogOpen(false)}>
+              Hủy
+            </Button>
+            <Button onClick={handleCredit}>Nạp tiền</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

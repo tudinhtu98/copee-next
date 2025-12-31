@@ -1,10 +1,8 @@
 "use client"
 
-import { useState } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
 
 import { fetcher } from '@/src/lib/fetcher'
 
@@ -17,37 +15,14 @@ type SpendingResponse = {
 }
 
 export default function BillingPage() {
-  const [isLoading, setIsLoading] = useState(false)
   const {
     data: balance,
-    mutate: mutateBalance,
     error,
   } = useSWR<BalanceResponse>('/billing/balance', fetcher)
   const { data: spending } = useSWR<SpendingResponse>(
     '/billing/spending?range=week',
     fetcher,
   )
-
-  async function onTopup() {
-    try {
-      setIsLoading(true)
-      const res = await fetch('/api/proxy/billing/credit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 100000, reference: 'manual:topup' }),
-      })
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ message: 'Lỗi' }))
-        throw new Error(data.message || 'Không thể nạp tiền')
-      }
-      toast.success('Đã nạp 100.000đ')
-      mutateBalance()
-    } catch (e: any) {
-      toast.error(e.message || 'Không thể nạp tiền')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <div className="space-y-4">
@@ -77,9 +52,15 @@ export default function BillingPage() {
             ? new Intl.NumberFormat('vi-VN').format(spending.amount) + '₫'
             : '...'}
         </div>
-        <Button onClick={onTopup} disabled={isLoading}>
-          {isLoading ? 'Đang xử lý...' : 'Nạp 100.000₫'}
-        </Button>
+        <div className="rounded-md bg-muted p-4 text-center">
+          <p className="text-sm font-medium text-muted-foreground">
+            Tính năng nạp tiền đang được cập nhật
+          </p>
+          <p className="text-lg font-semibold mt-1">Sắp có mặt</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Vui lòng liên hệ Admin để nạp tiền vào tài khoản
+          </p>
+        </div>
       </div>
     </div>
   )
