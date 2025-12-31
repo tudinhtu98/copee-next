@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,9 +45,13 @@ export default function AppHeader() {
           href={getLogoHref()}
           className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity pl-7"
         >
-          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
-            <span className="text-lg font-extrabold">C</span>
-          </div>
+          <Image
+            src="/logo-copee.png"
+            alt="Copee Logo"
+            width={48}
+            height={48}
+            className="w-12 h-12 object-contain"
+          />
           <span className="bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
             Copee
           </span>
