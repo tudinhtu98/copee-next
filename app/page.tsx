@@ -77,6 +77,19 @@ export default async function Home() {
           </p>
         </div>
       </section>
+
+      <footer className="max-w-5xl mx-auto mt-16 pt-8 border-t text-center text-sm text-muted-foreground">
+        <div className="flex items-center justify-center gap-4 flex-wrap">
+          <Link href="/privacy-policy" className="hover:text-foreground transition-colors">
+            Privacy Policy
+          </Link>
+          <span>•</span>
+          <Link href="mailto:support@copee.vn" className="hover:text-foreground transition-colors">
+            Liên hệ: support@copee.vn
+          </Link>
+        </div>
+        <p className="mt-4">© 2025 Copee. All rights reserved.</p>
+      </footer>
     </div>
   );
 }
