@@ -43,7 +43,20 @@ export default function RegisterPage() {
           password: v.password,
         }),
       });
-      const data = await res.json();
+
+      // Xử lý response cẩn thận để tránh lỗi parse JSON
+      let data;
+      try {
+        const text = await res.text();
+        data = text ? JSON.parse(text) : {};
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        if (!res.ok) {
+          throw new Error(`Đăng ký thất bại (Lỗi ${res.status}). Vui lòng thử lại.`);
+        }
+        data = {};
+      }
+
       if (!res.ok) throw new Error(data.message || "Đăng ký thất bại");
 
       toast.success("Đăng ký thành công! Đang đăng nhập...");
