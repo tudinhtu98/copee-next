@@ -1,4 +1,5 @@
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import type { AuthOptions } from "next-auth";
 
 function decodeJwtPayload(token?: string) {
@@ -15,6 +16,17 @@ function decodeJwtPayload(token?: string) {
 
 export const authOptions: AuthOptions = {
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
+    }),
     Credentials({
       name: "Credentials",
       credentials: { email: {}, password: {} },
@@ -77,20 +89,65 @@ export const authOptions: AuthOptions = {
       if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
-    async jwt({ token, user, trigger }: any) {
+    async jwt({ token, user, trigger, account }: any) {
       // Khi đăng nhập lần đầu
       if (user) {
-        token.accessToken = (user as any).token;
-        token.refreshToken = (user as any).refreshToken;
-        if ((user as any).email) token.email = (user as any).email;
-        if ((user as any).role) token.role = (user as any).role;
-        if ((user as any).username) token.username = (user as any).username;
-        if (!(token as any).role || !(token as any).username || !(token as any).email) {
-          const payload = decodeJwtPayload((user as any).token);
-          if (payload) {
-            token.email = payload.email;
-            token.role = payload.role;
-            token.username = payload.username;
+        // Nếu đăng nhập bằng Google OAuth
+        if (account?.provider === "google") {
+          try {
+            const baseUrl =
+              process.env.API_BASE_URL?.replace(/\/$/, "") ||
+              process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+
+            if (!baseUrl) {
+              throw new Error("API base URL is not configured");
+            }
+
+            // Gọi backend API để tạo/lấy token từ Google account
+            const response = await fetch(baseUrl + "/auth/google", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: user.email,
+                name: user.name,
+                image: user.image,
+                googleId: account.providerAccountId,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to authenticate with backend");
+            }
+
+            const data = await response.json();
+            if (data?.access_token && data?.refresh_token) {
+              token.accessToken = data.access_token;
+              token.refreshToken = data.refresh_token;
+
+              const payload = decodeJwtPayload(data.access_token);
+              if (payload) {
+                token.email = payload.email;
+                token.role = payload.role;
+                token.username = payload.username;
+              }
+            }
+          } catch (error) {
+            console.error("Google auth backend error:", error);
+          }
+        } else {
+          // Đăng nhập bằng credentials (existing logic)
+          token.accessToken = (user as any).token;
+          token.refreshToken = (user as any).refreshToken;
+          if ((user as any).email) token.email = (user as any).email;
+          if ((user as any).role) token.role = (user as any).role;
+          if ((user as any).username) token.username = (user as any).username;
+          if (!(token as any).role || !(token as any).username || !(token as any).email) {
+            const payload = decodeJwtPayload((user as any).token);
+            if (payload) {
+              token.email = payload.email;
+              token.role = payload.role;
+              token.username = payload.username;
+            }
           }
         }
         return token;
