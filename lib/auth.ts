@@ -120,28 +120,29 @@ export const authOptions: AuthOptions = {
             }
 
             const data = await response.json();
-            if (data?.access_token && data?.refresh_token) {
-              token.accessToken = data.access_token;
-              token.refreshToken = data.refresh_token;
+            if (!data?.access_token || !data?.refresh_token) {
+              throw new Error("Backend không trả về token hợp lệ");
+            }
 
-              const payload = decodeJwtPayload(data.access_token);
-              if (payload) {
-                token.email = payload.email;
-                token.role = payload.role || 'USER'; // Fallback to USER if role not found
-                token.username = payload.username;
-              } else {
-                // Nếu không decode được, dùng thông tin từ Google
-                token.email = user.email;
-                token.role = 'USER'; // Default role for new OAuth users
-                token.username = user.email?.split('@')[0];
-              }
+            token.accessToken = data.access_token;
+            token.refreshToken = data.refresh_token;
+
+            const payload = decodeJwtPayload(data.access_token);
+            if (payload) {
+              token.email = payload.email;
+              token.role = payload.role || 'USER'; // Fallback to USER if role not found
+              token.username = payload.username;
+            } else {
+              // Nếu không decode được, dùng thông tin từ Google
+              token.email = user.email;
+              token.role = 'USER'; // Default role for new OAuth users
+              token.username = user.email?.split('@')[0];
             }
           } catch (error) {
             console.error("Google auth backend error:", error);
-            // Nếu backend lỗi, vẫn set default role để tránh vòng lặp redirect
-            token.email = user.email;
-            token.role = 'USER';
-            token.username = user.email?.split('@')[0];
+            // Backend lỗi → không cho phép login
+            // Throw error để NextAuth hiển thị lỗi cho user
+            throw new Error("Không thể kết nối đến hệ thống. Vui lòng thử lại sau.");
           }
         } else {
           // Đăng nhập bằng credentials (existing logic)
@@ -170,6 +171,15 @@ export const authOptions: AuthOptions = {
           const now = Date.now();
           const timeUntilExpiry = expiresAt - now;
 
+          // Debug logging
+          if (process.env.NODE_ENV === "development") {
+            console.log("[NextAuth] Token expiry check:", {
+              expiresAt: new Date(expiresAt).toISOString(),
+              timeUntilExpiry: Math.floor(timeUntilExpiry / 1000 / 60) + " minutes",
+              willRefresh: timeUntilExpiry < 5 * 60 * 1000
+            });
+          }
+
           // Nếu token còn < 5 phút thì refresh
           if (timeUntilExpiry < 5 * 60 * 1000 && (token as any).refreshToken) {
             try {
@@ -190,8 +200,10 @@ export const authOptions: AuthOptions = {
                   const data = await response.json();
                   token.accessToken = data.access_token;
                   token.refreshToken = data.refresh_token;
+                  console.log("[NextAuth] Token refreshed successfully");
                 } else {
                   // Refresh token không hợp lệ, xóa token
+                  console.error("[NextAuth] Refresh failed:", response.status, await response.text());
                   token.accessToken = null;
                   token.refreshToken = null;
                 }
