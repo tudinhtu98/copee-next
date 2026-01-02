@@ -25,7 +25,8 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url)
     }
     const role = (token as any).role
-    if (!(role === 'ADMIN' || role === 'MOD')) {
+    // Nếu không có role, mặc định là USER và redirect về dashboard
+    if (!role || !(role === 'ADMIN' || role === 'MOD')) {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
     return NextResponse.next()
@@ -40,8 +41,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(url)
     }
     const role = (token as any).role
-    // Only USER can access dashboard; ADMIN/MOD are redirected to /admin
-    if (role !== 'USER') {
+    // Chỉ USER mới vào dashboard; ADMIN/MOD được redirect sang /admin
+    // Nếu không có role, mặc định coi như USER
+    if (role && role !== 'USER') {
       return NextResponse.redirect(new URL('/admin', req.url))
     }
     return NextResponse.next()

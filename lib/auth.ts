@@ -127,12 +127,21 @@ export const authOptions: AuthOptions = {
               const payload = decodeJwtPayload(data.access_token);
               if (payload) {
                 token.email = payload.email;
-                token.role = payload.role;
+                token.role = payload.role || 'USER'; // Fallback to USER if role not found
                 token.username = payload.username;
+              } else {
+                // Nếu không decode được, dùng thông tin từ Google
+                token.email = user.email;
+                token.role = 'USER'; // Default role for new OAuth users
+                token.username = user.email?.split('@')[0];
               }
             }
           } catch (error) {
             console.error("Google auth backend error:", error);
+            // Nếu backend lỗi, vẫn set default role để tránh vòng lặp redirect
+            token.email = user.email;
+            token.role = 'USER';
+            token.username = user.email?.split('@')[0];
           }
         } else {
           // Đăng nhập bằng credentials (existing logic)
