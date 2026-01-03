@@ -44,50 +44,62 @@ export async function DELETE(
 }
 
 async function proxy(req: NextRequest, path: string[]) {
-  // Check if request already has Authorization header (from Chrome Extension)
-  // If yes, use it; otherwise use session token (for Next.js frontend)
-  const requestAuthHeader = req.headers.get('authorization')
-  let token: string | null = null
+  try {
+    // Check if request already has Authorization header (from Chrome Extension)
+    // If yes, use it; otherwise use session token (for Next.js frontend)
+    const requestAuthHeader = req.headers.get('authorization')
+    let token: string | null = null
 
-  if (requestAuthHeader && requestAuthHeader.startsWith('Bearer ')) {
-    // Use token from request header (Chrome Extension API key)
-    token = requestAuthHeader.substring(7) // Remove 'Bearer ' prefix
-  } else {
-    // Use session token (Next.js frontend)
-    const session = (await getServerSession(authOptions as any)) as any
-    token = session?.accessToken
+    if (requestAuthHeader && requestAuthHeader.startsWith('Bearer ')) {
+      // Use token from request header (Chrome Extension API key)
+      token = requestAuthHeader.substring(7) // Remove 'Bearer ' prefix
+    } else {
+      // Use session token (Next.js frontend)
+      const session = (await getServerSession(authOptions as any)) as any
+      token = session?.accessToken
+    }
+
+    if (!token) {
+      console.error('[proxy] missing access token', { path })
+      return NextResponse.json({ message: 'Missing access token' }, { status: 401 })
+    }
+
+    const baseUrl =
+      process.env.API_BASE_URL?.replace(/\/$/, '') ||
+      process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '')
+
+    if (!baseUrl) {
+      console.error('[proxy] missing API base URL configuration')
+      return NextResponse.json({ message: 'API base URL is not configured' }, { status: 500 })
+    }
+
+    const url = baseUrl + '/' + path.join('/') + (req.nextUrl.search || '')
+
+    console.log('[proxy] Forwarding request:', { method: req.method, url })
+
+    const res = await fetch(url, {
+      method: req.method,
+      headers: {
+        'Content-Type': req.headers.get('content-type') || 'application/json',
+        Authorization: 'Bearer ' + token,
+      },
+      body: req.method === 'GET' ? undefined : await req.text(),
+      cache: 'no-store',
+    })
+
+    console.log('[proxy] Backend response:', { status: res.status, url })
+
+    const text = await res.text()
+
+    return new NextResponse(text, {
+      status: res.status,
+      headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
+    })
+  } catch (error) {
+    console.error('[proxy] Error:', error, { path })
+    return NextResponse.json(
+      { message: 'Failed to connect to backend API', error: String(error) },
+      { status: 500 }
+    )
   }
-
-  if (!token) {
-    console.error('[proxy] missing access token', { path })
-    return NextResponse.json({ message: 'Missing access token' }, { status: 401 })
-  }
-
-  const baseUrl =
-    process.env.API_BASE_URL?.replace(/\/$/, '') ||
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '')
-
-  if (!baseUrl) {
-    console.error('[proxy] missing API base URL configuration')
-    return NextResponse.json({ message: 'API base URL is not configured' }, { status: 500 })
-  }
-
-  const url = baseUrl + '/' + path.join('/') + (req.nextUrl.search || '')
-
-  const res = await fetch(url, {
-    method: req.method,
-    headers: {
-      'Content-Type': req.headers.get('content-type') || 'application/json',
-      Authorization: 'Bearer ' + token,
-    },
-    body: req.method === 'GET' ? undefined : await req.text(),
-    cache: 'no-store',
-  })
-
-  const text = await res.text()
-
-  return new NextResponse(text, {
-    status: res.status,
-    headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
-  })
 }
