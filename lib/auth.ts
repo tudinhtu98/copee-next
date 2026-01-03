@@ -89,7 +89,28 @@ export const authOptions: AuthOptions = {
       if (new URL(url).origin === baseUrl) return url;
       return baseUrl;
     },
-    async jwt({ token, user, account }: any) {
+    async jwt({ token, user, account, trigger, session }: any) {
+      // Handle manual session update (from update() call)
+      if (trigger === "update" && session) {
+        if (session.accessToken) {
+          token.accessToken = session.accessToken;
+        }
+        if (session.refreshToken) {
+          token.refreshToken = session.refreshToken;
+        }
+        // Decode new token to get updated hasPassword
+        if (session.accessToken) {
+          const payload = decodeJwtPayload(session.accessToken);
+          if (payload) {
+            token.hasPassword = payload.hasPassword;
+            token.email = payload.email;
+            token.role = payload.role;
+            token.username = payload.username;
+          }
+        }
+        return token;
+      }
+
       // Khi đăng nhập lần đầu
       if (user) {
         // Nếu đăng nhập bằng Google OAuth

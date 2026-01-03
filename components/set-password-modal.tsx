@@ -59,8 +59,13 @@ export function SetPasswordModal() {
         throw new Error(data.message || "Có lỗi xảy ra");
       }
 
-      // Update session to reflect password has been set
-      await update();
+      const data = await response.json();
+
+      // Update session với token mới từ backend (có hasPassword: true)
+      await update({
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      });
 
       // Redirect to dashboard
       router.push("/dashboard");
