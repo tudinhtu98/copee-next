@@ -135,11 +135,13 @@ export const authOptions: AuthOptions = {
               token.email = payload.email;
               token.role = payload.role || 'USER';
               token.username = payload.username;
+              token.hasPassword = payload.hasPassword ?? false;
             } else {
               // Nếu không decode được, dùng thông tin từ Google
               token.email = user.email;
               token.role = 'USER';
               token.username = user.email?.split('@')[0];
+              token.hasPassword = false;
             }
           } catch (error) {
             // Backend lỗi → không cho phép login
@@ -152,12 +154,13 @@ export const authOptions: AuthOptions = {
           if ((user as any).email) token.email = (user as any).email;
           if ((user as any).role) token.role = (user as any).role;
           if ((user as any).username) token.username = (user as any).username;
-          if (!(token as any).role || !(token as any).username || !(token as any).email) {
+          if (!(token as any).role || !(token as any).username || !(token as any).email || (token as any).hasPassword === undefined) {
             const payload = decodeJwtPayload((user as any).token);
             if (payload) {
               token.email = payload.email;
               token.role = payload.role;
               token.username = payload.username;
+              token.hasPassword = payload.hasPassword ?? true;
             }
           }
         }
@@ -192,6 +195,12 @@ export const authOptions: AuthOptions = {
                   const data = await response.json();
                   token.accessToken = data.access_token;
                   token.refreshToken = data.refresh_token;
+
+                  // Update hasPassword from refreshed token
+                  const refreshedPayload = decodeJwtPayload(data.access_token);
+                  if (refreshedPayload && refreshedPayload.hasPassword !== undefined) {
+                    token.hasPassword = refreshedPayload.hasPassword;
+                  }
                 } else {
                   // Refresh token không hợp lệ, xóa token
                   token.accessToken = null;
@@ -206,13 +215,16 @@ export const authOptions: AuthOptions = {
         }
       }
 
-      // ensure role, username, email if accessToken already exists
-      if ((token as any).accessToken && (!(token as any).role || !(token as any).email)) {
+      // ensure role, username, email, hasPassword if accessToken already exists
+      if ((token as any).accessToken && (!(token as any).role || !(token as any).email || (token as any).hasPassword === undefined)) {
         const payload = decodeJwtPayload((token as any).accessToken);
         if (payload) {
           token.email = payload.email;
           token.role = payload.role;
           token.username = payload.username;
+          if (payload.hasPassword !== undefined) {
+            token.hasPassword = payload.hasPassword;
+          }
         }
       }
 
@@ -230,6 +242,7 @@ export const authOptions: AuthOptions = {
         email: session?.user?.email || payload?.email || token?.email,
         role: (token as any).role,
         username: (token as any).username,
+        hasPassword: (token as any).hasPassword !== undefined ? (token as any).hasPassword : (payload?.hasPassword ?? true),
       };
       return session;
     },

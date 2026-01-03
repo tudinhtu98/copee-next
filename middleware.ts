@@ -4,10 +4,13 @@ import { getToken } from 'next-auth/jwt'
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }) as any
+
+  // Không force redirect nữa, để user ở trang chủ và hiển thị modal
+  // Modal sẽ xuất hiện tự động khi user.hasPassword === false
 
   // Protect settings: require any logged-in user
   if (pathname.startsWith('/settings')) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }) as any
     if (!token) {
       const url = new URL('/login', req.url)
       url.searchParams.set('next', '/settings')
@@ -18,7 +21,6 @@ export async function middleware(req: NextRequest) {
 
   // Protect admin area: require role ADMIN or MOD
   if (pathname.startsWith('/admin')) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }) as any
     if (!token) {
       const url = new URL('/login', req.url)
       url.searchParams.set('next', '/admin')
@@ -34,7 +36,6 @@ export async function middleware(req: NextRequest) {
 
   // Protect dashboard: require logged-in USER (or higher)
   if (pathname.startsWith('/dashboard')) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET }) as any
     if (!token) {
       const url = new URL('/login', req.url)
       url.searchParams.set('next', '/dashboard')
