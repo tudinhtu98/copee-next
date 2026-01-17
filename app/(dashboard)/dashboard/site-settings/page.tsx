@@ -385,19 +385,6 @@ export default function SettingsPage() {
                     Tạo tại: WordPress Admin → Users → Profile → Application Passwords
                   </p>
                 </div>
-                <div className="grid gap-2 pt-2 border-t">
-                  <label className="text-sm font-medium">Shopee Affiliate ID (Tùy chọn)</label>
-                  <Input
-                    placeholder="Nhập Affiliate ID từ Shopee"
-                    value={form.shopeeAffiliateId}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, shopeeAffiliateId: e.target.value }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Link sản phẩm sẽ tự động chuyển thành affiliate link khi upload
-                  </p>
-                </div>
               </div>
               <DialogFooter>
                 <Button
