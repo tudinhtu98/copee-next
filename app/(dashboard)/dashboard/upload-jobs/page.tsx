@@ -14,6 +14,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import useSWR from "swr";
 
@@ -66,6 +74,18 @@ export default function UploadJobsPage() {
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: 'process' | 'cancel';
+    jobCount: number;
+    estimatedCost: number;
+    jobIds?: string[];
+  }>({
+    open: false,
+    type: 'process',
+    jobCount: 0,
+    estimatedCost: 0,
+  });
 
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("perPage") || "20");
@@ -107,7 +127,7 @@ export default function UploadJobsPage() {
 
   const handleProcessSelected = useCallback(async () => {
     const jobIds = selectedJobs.size > 0 ? Array.from(selectedJobs) : undefined;
-    
+
     // Calculate number of jobs to process and estimated cost
     let jobCount = 0;
     if (jobIds && jobIds.length > 0) {
@@ -116,17 +136,28 @@ export default function UploadJobsPage() {
       // Count PENDING and FAILED jobs
       jobCount = jobs.filter((job) => job.status === "PENDING" || job.status === "FAILED").length;
     }
-    
+
     const estimatedCost = jobCount * 1000; // 1000 VND per successful upload
-    const message = jobIds
-      ? `Bạn có chắc muốn xử lý ${jobIds.length} job đã chọn?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`
-      : `Bạn có chắc muốn xử lý tất cả jobs Đang chờ/Thất bại (${jobCount} job)?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`;
-    const confirmed = window.confirm(message);
-    if (!confirmed) return;
+
+    // Show confirmation dialog
+    setConfirmDialog({
+      open: true,
+      type: 'process',
+      jobCount,
+      estimatedCost,
+      jobIds,
+    });
+  }, [selectedJobs, jobs]);
+
+  const handleConfirmProcess = useCallback(async () => {
+    const jobIds = confirmDialog.jobIds;
+
+    // Close dialog
+    setConfirmDialog({ open: false, type: 'process', jobCount: 0, estimatedCost: 0 });
 
     try {
       setIsProcessing(true);
-      
+
       // If no jobs selected, process all pending jobs (loop until done)
       if (!jobIds || jobIds.length === 0) {
         let totalProcessed = 0;
@@ -190,17 +221,26 @@ export default function UploadJobsPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [selectedJobs, mutate, jobs]);
+  }, [confirmDialog.jobIds, mutate]);
 
   const handleCancelSelected = useCallback(async () => {
     const jobIds = selectedJobs.size > 0 ? Array.from(selectedJobs) : undefined;
-    
-    // If no jobs selected, cancel all FAILED jobs
-    const message = jobIds
-      ? `Bạn có chắc muốn hủy ${jobIds.length} job đã chọn?`
-      : `Bạn có chắc muốn hủy tất cả jobs Thất bại?`;
-    const confirmed = window.confirm(message);
-    if (!confirmed) return;
+
+    // Show confirmation dialog
+    setConfirmDialog({
+      open: true,
+      type: 'cancel',
+      jobCount: jobIds ? jobIds.length : jobs.filter((job) => job.status === "FAILED").length,
+      estimatedCost: 0,
+      jobIds,
+    });
+  }, [selectedJobs, jobs]);
+
+  const handleConfirmCancel = useCallback(async () => {
+    const jobIds = confirmDialog.jobIds;
+
+    // Close dialog
+    setConfirmDialog({ open: false, type: 'cancel', jobCount: 0, estimatedCost: 0 });
 
     try {
       setIsCancelling(true);
@@ -226,7 +266,7 @@ export default function UploadJobsPage() {
     } finally {
       setIsCancelling(false);
     }
-  }, [selectedJobs, mutate]);
+  }, [confirmDialog.jobIds, mutate]);
 
   const handleStatusChange = useCallback(
     (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -551,6 +591,67 @@ export default function UploadJobsPage() {
           )}
         </>
       )}
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setConfirmDialog({ open: false, type: 'process', jobCount: 0, estimatedCost: 0 });
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmDialog.type === 'process' ? 'Xác nhận xử lý' : 'Xác nhận hủy'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmDialog.type === 'process' ? (
+                <>
+                  {confirmDialog.jobIds && confirmDialog.jobIds.length > 0 ? (
+                    <p className="mb-2">
+                      Bạn có chắc muốn xử lý <strong>{confirmDialog.jobIds.length}</strong> job đã chọn?
+                    </p>
+                  ) : (
+                    <p className="mb-2">
+                      Bạn có chắc muốn xử lý tất cả jobs <strong>Đang chờ/Thất bại</strong> ({confirmDialog.jobCount} job)?
+                    </p>
+                  )}
+                  <div className="bg-blue-50 border border-blue-200 rounded p-3 mt-3">
+                    <p className="text-sm font-medium text-blue-900">
+                      Số tiền dự kiến sẽ thanh toán: <strong>{confirmDialog.estimatedCost.toLocaleString('vi-VN')} VND</strong>
+                    </p>
+                    <p className="text-xs text-blue-700 mt-1">
+                      (Mỗi job upload thành công sẽ trừ 1.000 VND)
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <p>
+                  {confirmDialog.jobIds && confirmDialog.jobIds.length > 0 ? (
+                    <>Bạn có chắc muốn hủy <strong>{confirmDialog.jobIds.length}</strong> job đã chọn?</>
+                  ) : (
+                    <>Bạn có chắc muốn hủy tất cả jobs <strong>Thất bại</strong>?</>
+                  )}
+                </p>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDialog({ open: false, type: 'process', jobCount: 0, estimatedCost: 0 })}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={confirmDialog.type === 'process' ? handleConfirmProcess : handleConfirmCancel}
+              variant={confirmDialog.type === 'process' ? 'default' : 'destructive'}
+              className={confirmDialog.type === 'process' ? 'bg-blue-600 hover:bg-blue-700' : ''}
+            >
+              {confirmDialog.type === 'process' ? 'Xác nhận xử lý' : 'Xác nhận hủy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
