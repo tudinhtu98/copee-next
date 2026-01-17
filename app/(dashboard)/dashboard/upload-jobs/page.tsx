@@ -118,9 +118,9 @@ export default function UploadJobsPage() {
     }
     
     const estimatedCost = jobCount * 1000; // 1000 VND per successful upload
-    const message = jobIds 
+    const message = jobIds
       ? `Bạn có chắc muốn xử lý ${jobIds.length} job đã chọn?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`
-      : `Bạn có chắc muốn xử lý tất cả jobs PENDING/FAILED (${jobCount} job)?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`;
+      : `Bạn có chắc muốn xử lý tất cả jobs Đang chờ/Thất bại (${jobCount} job)?\n\nSố tiền dự kiến sẽ thanh toán: ${estimatedCost.toLocaleString('vi-VN')} VND\n(Mỗi job upload thành công sẽ trừ 1.000 VND)`;
     const confirmed = window.confirm(message);
     if (!confirmed) return;
 
@@ -196,9 +196,9 @@ export default function UploadJobsPage() {
     const jobIds = selectedJobs.size > 0 ? Array.from(selectedJobs) : undefined;
     
     // If no jobs selected, cancel all FAILED jobs
-    const message = jobIds 
+    const message = jobIds
       ? `Bạn có chắc muốn hủy ${jobIds.length} job đã chọn?`
-      : `Bạn có chắc muốn hủy tất cả jobs FAILED?`;
+      : `Bạn có chắc muốn hủy tất cả jobs Thất bại?`;
     const confirmed = window.confirm(message);
     if (!confirmed) return;
 
@@ -258,21 +258,19 @@ export default function UploadJobsPage() {
     [router, searchParams]
   );
 
+  const statusDisplay: Record<string, { label: string; color: string }> = {
+    PENDING: { label: "Đang chờ", color: "bg-yellow-100 text-yellow-800" },
+    SUCCESS: { label: "Thành công", color: "bg-green-100 text-green-800" },
+    FAILED: { label: "Thất bại", color: "bg-red-100 text-red-800" },
+    CANCELLED: { label: "Đã hủy", color: "bg-gray-100 text-gray-800" },
+    PROCESSING: { label: "Đang xử lý", color: "bg-blue-100 text-blue-800" },
+  };
+
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      PENDING: "bg-yellow-100 text-yellow-800",
-      SUCCESS: "bg-green-100 text-green-800",
-      FAILED: "bg-red-100 text-red-800",
-      CANCELLED: "bg-gray-100 text-gray-800",
-      PROCESSING: "bg-blue-100 text-blue-800",
-    };
+    const display = statusDisplay[status] || { label: status, color: "bg-gray-100 text-gray-800" };
     return (
-      <span
-        className={`px-2 py-1 rounded text-xs font-medium ${
-          colors[status] || "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {status}
+      <span className={`px-2 py-1 rounded text-xs font-medium ${display.color}`}>
+        {display.label}
       </span>
     );
   };
@@ -312,9 +310,9 @@ export default function UploadJobsPage() {
           >
             {isProcessing 
               ? "Đang xử lý..." 
-              : selectedJobs.size > 0 
+              : selectedJobs.size > 0
                 ? `Xử lý ${selectedJobs.size} job đã chọn`
-                : "Xử lý tất cả PENDING/FAILED"}
+                : "Xử lý tất cả Đang chờ/Thất bại"}
           </Button>
         </div>
       </div>
@@ -328,11 +326,11 @@ export default function UploadJobsPage() {
             className="border rounded px-2 py-1"
           >
             <option value="">Tất cả</option>
-            <option value="PENDING">PENDING</option>
-            <option value="SUCCESS">SUCCESS</option>
-            <option value="FAILED">FAILED</option>
-            <option value="CANCELLED">CANCELLED</option>
-            <option value="PROCESSING">PROCESSING</option>
+            <option value="PENDING">Đang chờ</option>
+            <option value="SUCCESS">Thành công</option>
+            <option value="FAILED">Thất bại</option>
+            <option value="CANCELLED">Đã hủy</option>
+            <option value="PROCESSING">Đang xử lý</option>
           </select>
         </div>
 
