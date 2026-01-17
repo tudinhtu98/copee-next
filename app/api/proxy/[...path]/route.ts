@@ -11,6 +11,21 @@ async function getPath(ctx: RouteContext): Promise<string[]> {
   return params.path
 }
 
+// CORS headers for Chrome Extension
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: corsHeaders,
+  })
+}
+
 export async function GET(
   req: NextRequest,
   ctx: { params: Promise<{ path: string[] }> }
@@ -93,13 +108,16 @@ async function proxy(req: NextRequest, path: string[]) {
 
     return new NextResponse(text, {
       status: res.status,
-      headers: { 'content-type': res.headers.get('content-type') || 'application/json' },
+      headers: {
+        'content-type': res.headers.get('content-type') || 'application/json',
+        ...corsHeaders,
+      },
     })
   } catch (error) {
     console.error('[proxy] Error:', error, { path })
     return NextResponse.json(
       { message: 'Failed to connect to backend API', error: String(error) },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     )
   }
 }

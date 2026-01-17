@@ -82,6 +82,7 @@ type ProductFormValues = {
   category: string;
   price: string;
   description: string;
+  sourceUrl: string;
 };
 
 type ProductCreateFormValues = {
@@ -908,6 +909,7 @@ function ProductEditDialog({
       category: "",
       price: "",
       description: "",
+      sourceUrl: "",
     },
   });
 
@@ -918,6 +920,7 @@ function ProductEditDialog({
         category: product.category ?? "",
         price: product.price != null ? String(product.price) : "",
         description: product.description ?? "",
+        sourceUrl: product.sourceUrl ?? "",
       });
     }
   }, [product, reset]);
@@ -931,9 +934,11 @@ function ProductEditDialog({
         category?: string | null;
         price?: number | null;
         description?: string;
+        sourceUrl?: string;
       } = {
         title: values.title.trim(),
         description: values.description.trim(),
+        sourceUrl: values.sourceUrl.trim(),
       };
       const category = values.category.trim();
       payload.category = category ? category : null;
@@ -977,6 +982,10 @@ function ProductEditDialog({
           </p>
         </DialogHeader>
         <form className="grid gap-3" onSubmit={onSubmit}>
+          <div className="grid gap-1.5">
+            <label className="text-sm font-medium">Link nguồn</label>
+            <Input placeholder="https://shopee.vn/..." {...register("sourceUrl")} />
+          </div>
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">Tiêu đề</label>
             <Input placeholder="Tiêu đề sản phẩm" {...register("title")} />
