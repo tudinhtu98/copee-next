@@ -405,15 +405,15 @@ export default function SettingsPage() {
                   variant="outline"
                   onClick={() => {
                     setIsAddSiteDialogOpen(false);
-                  setForm({
-                    name: "",
-                    baseUrl: "",
-                    wooConsumerKey: "",
-                    wooConsumerSecret: "",
-                    wpUsername: "",
-                    wpApplicationPassword: "",
-                    shopeeAffiliateId: "",
-                  });
+                    setForm({
+                      name: "",
+                      baseUrl: "",
+                      wooConsumerKey: "",
+                      wooConsumerSecret: "",
+                      wpUsername: "",
+                      wpApplicationPassword: "",
+                      shopeeAffiliateId: "",
+                    });
                   }}
                 >
                   Hủy
