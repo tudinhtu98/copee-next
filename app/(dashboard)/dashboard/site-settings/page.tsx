@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-import { fetcher, apiFetch } from '@/src/lib/fetcher';
+import { fetcher, apiFetch } from "@/src/lib/fetcher";
 
 type Site = {
   id: string;
@@ -68,7 +68,8 @@ export default function SettingsPage() {
   const [isSavingShopeeAffiliate, setIsSavingShopeeAffiliate] = useState(false);
   const [isWooKeysDialogOpen, setIsWooKeysDialogOpen] = useState(false);
   const [isWpAuthDialogOpen, setIsWpAuthDialogOpen] = useState(false);
-  const [isShopeeAffiliateDialogOpen, setIsShopeeAffiliateDialogOpen] = useState(false);
+  const [isShopeeAffiliateDialogOpen, setIsShopeeAffiliateDialogOpen] =
+    useState(false);
   const [testingSiteId, setTestingSiteId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     siteId: string | null;
@@ -148,7 +149,11 @@ export default function SettingsPage() {
         return toast.error(data.message || "Lỗi lưu");
       }
       toast.success("Đã cập nhật WooCommerce keys");
-      setEditingWooKeys({ siteId: null, wooConsumerKey: "", wooConsumerSecret: "" });
+      setEditingWooKeys({
+        siteId: null,
+        wooConsumerKey: "",
+        wooConsumerSecret: "",
+      });
       setIsWooKeysDialogOpen(false);
       mutate();
     } finally {
@@ -214,7 +219,9 @@ export default function SettingsPage() {
       return;
     }
     try {
-      const res = await apiFetch(`/sites/${deleteConfirm.siteId}`, { method: "DELETE" });
+      const res = await apiFetch(`/sites/${deleteConfirm.siteId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) {
         const data = await res
           .json()
@@ -253,7 +260,11 @@ export default function SettingsPage() {
         return toast.error(data.message || "Lỗi lưu");
       }
       toast.success("Đã cập nhật Application Password");
-      setEditingWpAuth({ siteId: null, wpUsername: "", wpApplicationPassword: "" });
+      setEditingWpAuth({
+        siteId: null,
+        wpUsername: "",
+        wpApplicationPassword: "",
+      });
       setIsWpAuthDialogOpen(false);
       mutate();
     } finally {
@@ -268,11 +279,13 @@ export default function SettingsPage() {
         method: "POST",
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ message: "Lỗi test connection" }));
+        const data = await res
+          .json()
+          .catch(() => ({ message: "Lỗi test connection" }));
         return toast.error(data.message || "Lỗi test connection");
       }
       const results = await res.json();
-      
+
       // Show results for WooCommerce
       if (results.wooCommerce) {
         if (results.wooCommerce.success) {
@@ -281,7 +294,7 @@ export default function SettingsPage() {
           toast.error(`WooCommerce: ${results.wooCommerce.message}`);
         }
       }
-      
+
       // Show results for WordPress
       if (results.wordPress) {
         if (results.wordPress.success) {
@@ -301,7 +314,10 @@ export default function SettingsPage() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Quản lý WordPress Sites</h1>
-        <Dialog open={isAddSiteDialogOpen} onOpenChange={setIsAddSiteDialogOpen}>
+        <Dialog
+          open={isAddSiteDialogOpen}
+          onOpenChange={setIsAddSiteDialogOpen}
+        >
           <DialogTrigger asChild>
             <Button onClick={() => setIsAddSiteDialogOpen(true)}>
               Thêm Site Mới
@@ -336,54 +352,80 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">WooCommerce Consumer Key</label>
+                  <label className="text-sm font-medium">
+                    WooCommerce Consumer Key
+                  </label>
                   <Input
                     placeholder="ck_..."
                     value={form.wooConsumerKey}
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, wooConsumerKey: e.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        wooConsumerKey: e.target.value,
+                      }))
                     }
                     required
                   />
                 </div>
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium">WooCommerce Consumer Secret</label>
+                  <label className="text-sm font-medium">
+                    WooCommerce Consumer Secret
+                  </label>
                   <Input
                     type="password"
                     placeholder="cs_..."
                     value={form.wooConsumerSecret}
                     onChange={(e) =>
-                      setForm((prev) => ({ ...prev, wooConsumerSecret: e.target.value }))
+                      setForm((prev) => ({
+                        ...prev,
+                        wooConsumerSecret: e.target.value,
+                      }))
                     }
                     required
                   />
                 </div>
-                <div className="grid gap-2 pt-2 border-t">
-                  <label className="text-sm font-medium">WordPress Username (Tùy chọn)</label>
-                  <Input
-                    placeholder="admin"
-                    value={form.wpUsername}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, wpUsername: e.target.value }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Để upload hình ảnh lên WordPress Media Library
-                  </p>
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Application Password (Tùy chọn)</label>
-                  <Input
-                    type="password"
-                    placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
-                    value={form.wpApplicationPassword}
-                    onChange={(e) =>
-                      setForm((prev) => ({ ...prev, wpApplicationPassword: e.target.value }))
-                    }
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Tạo tại: WordPress Admin → Users → Profile → Application Passwords
-                  </p>
+                <div className="grid gap-3 pt-2 border-t p-3 rounded-md bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">
+                      WordPress Application Password (Tùy chọn)
+                    </label>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground -mt-2">
+                      Để upload hình ảnh lên WordPress Media Library
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Tạo tại: WordPress Admin → Users → Profile → Application
+                      Passwords
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm">Username</label>
+                    <Input
+                      placeholder="admin"
+                      value={form.wpUsername}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          wpUsername: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <label className="text-sm">Application Password</label>
+                    <Input
+                      type="password"
+                      placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"
+                      value={form.wpApplicationPassword}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          wpApplicationPassword: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
               </div>
               <DialogFooter>
@@ -409,12 +451,12 @@ export default function SettingsPage() {
                   {isSaving ? "Đang lưu..." : "Thêm Site"}
                 </Button>
               </DialogFooter>
-    </form>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
 
-    <div className="space-y-2">
+      <div className="space-y-2">
         {isLoading && (
           <div className="text-sm text-muted-foreground">Đang tải...</div>
         )}
@@ -424,18 +466,15 @@ export default function SettingsPage() {
           </div>
         )}
         <div className="grid gap-3">
-        {sites?.map((site) => (
-            <div
-              key={site.id}
-              className="rounded-lg border p-4 space-y-3"
-            >
+          {sites?.map((site) => (
+            <div key={site.id} className="rounded-lg border p-4 space-y-3">
               <div className="flex items-start justify-between">
-            <div>
+                <div>
                   <div className="font-semibold text-lg">{site.name}</div>
                   <div className="text-sm text-muted-foreground mt-1">
                     {site.baseUrl}
                   </div>
-            </div>
+                </div>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
@@ -443,15 +482,17 @@ export default function SettingsPage() {
                     onClick={() => onTestConnection(site.id)}
                     disabled={testingSiteId === site.id}
                   >
-                    {testingSiteId === site.id ? "Đang test..." : "Test Connection"}
+                    {testingSiteId === site.id
+                      ? "Đang test..."
+                      : "Test Connection"}
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => openDeleteDialog(site)}
                   >
-              Xoá
-            </Button>
+                    Xoá
+                  </Button>
                 </div>
               </div>
 
@@ -462,13 +503,21 @@ export default function SettingsPage() {
                     <div className="text-sm font-medium">WooCommerce Keys</div>
                     <div className="text-xs text-muted-foreground mt-1">
                       {site.wooConsumerKey ? (
-                        <>Consumer Key: {site.wooConsumerKey.substring(0, 20)}... • Consumer Secret: ••••••••</>
+                        <>
+                          Consumer Key: {site.wooConsumerKey.substring(0, 20)}
+                          ... • Consumer Secret: ••••••••
+                        </>
                       ) : (
                         <span className="text-yellow-600">Chưa cấu hình</span>
                       )}
                     </div>
                   </div>
-                  <Dialog open={isWooKeysDialogOpen && editingWooKeys.siteId === site.id} onOpenChange={setIsWooKeysDialogOpen}>
+                  <Dialog
+                    open={
+                      isWooKeysDialogOpen && editingWooKeys.siteId === site.id
+                    }
+                    onOpenChange={setIsWooKeysDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -482,7 +531,8 @@ export default function SettingsPage() {
                       <form onSubmit={onSaveWooKeys}>
                         <DialogHeader>
                           <DialogTitle>
-                            {site.wooConsumerKey ? "Chỉnh sửa" : "Thiết lập"} WooCommerce Keys
+                            {site.wooConsumerKey ? "Chỉnh sửa" : "Thiết lập"}{" "}
+                            WooCommerce Keys
                           </DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -517,7 +567,8 @@ export default function SettingsPage() {
                               }
                             />
                             <p className="text-xs text-muted-foreground">
-                              Tạo tại: WooCommerce → Settings → Advanced → REST API
+                              Tạo tại: WooCommerce → Settings → Advanced → REST
+                              API
                             </p>
                           </div>
                         </div>
@@ -526,7 +577,11 @@ export default function SettingsPage() {
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              setEditingWooKeys({ siteId: null, wooConsumerKey: "", wooConsumerSecret: "" });
+                              setEditingWooKeys({
+                                siteId: null,
+                                wooConsumerKey: "",
+                                wooConsumerSecret: "",
+                              });
                               setIsWooKeysDialogOpen(false);
                             }}
                           >
@@ -544,16 +599,26 @@ export default function SettingsPage() {
                 {/* Application Password */}
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <div className="text-sm font-medium">Application Password</div>
+                    <div className="text-sm font-medium">
+                      Application Password
+                    </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       {site.wpUsername ? (
-                        <>Username: {site.wpUsername} • Application Password: ••••••••</>
+                        <>
+                          Username: {site.wpUsername} • Application Password:
+                          ••••••••
+                        </>
                       ) : (
                         <span className="text-yellow-600">Chưa cấu hình</span>
                       )}
                     </div>
                   </div>
-                  <Dialog open={isWpAuthDialogOpen && editingWpAuth.siteId === site.id} onOpenChange={setIsWpAuthDialogOpen}>
+                  <Dialog
+                    open={
+                      isWpAuthDialogOpen && editingWpAuth.siteId === site.id
+                    }
+                    onOpenChange={setIsWpAuthDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -567,7 +632,8 @@ export default function SettingsPage() {
                       <form onSubmit={onSaveWpAuth}>
                         <DialogHeader>
                           <DialogTitle>
-                            {site.wpUsername ? "Chỉnh sửa" : "Thiết lập"} Application Password
+                            {site.wpUsername ? "Chỉnh sửa" : "Thiết lập"}{" "}
+                            Application Password
                           </DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -602,7 +668,8 @@ export default function SettingsPage() {
                               }
                             />
                             <p className="text-xs text-muted-foreground">
-                              Tạo tại: WordPress Admin → Users → Profile → Application Passwords
+                              Tạo tại: WordPress Admin → Users → Profile →
+                              Application Passwords
                             </p>
                           </div>
                         </div>
@@ -611,7 +678,11 @@ export default function SettingsPage() {
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              setEditingWpAuth({ siteId: null, wpUsername: "", wpApplicationPassword: "" });
+                              setEditingWpAuth({
+                                siteId: null,
+                                wpUsername: "",
+                                wpApplicationPassword: "",
+                              });
                               setIsWpAuthDialogOpen(false);
                             }}
                           >
@@ -629,7 +700,9 @@ export default function SettingsPage() {
                 {/* Shopee Affiliate ID */}
                 <div className="flex items-center justify-between pt-2 border-t">
                   <div className="flex-1">
-                    <div className="text-sm font-medium">Shopee Affiliate ID</div>
+                    <div className="text-sm font-medium">
+                      Shopee Affiliate ID
+                    </div>
                     <div className="text-xs text-muted-foreground mt-1">
                       {site.shopeeAffiliateId ? (
                         <>Affiliate ID: {site.shopeeAffiliateId}</>
@@ -638,7 +711,13 @@ export default function SettingsPage() {
                       )}
                     </div>
                   </div>
-                  <Dialog open={isShopeeAffiliateDialogOpen && editingShopeeAffiliate.siteId === site.id} onOpenChange={setIsShopeeAffiliateDialogOpen}>
+                  <Dialog
+                    open={
+                      isShopeeAffiliateDialogOpen &&
+                      editingShopeeAffiliate.siteId === site.id
+                    }
+                    onOpenChange={setIsShopeeAffiliateDialogOpen}
+                  >
                     <DialogTrigger asChild>
                       <Button
                         variant="outline"
@@ -652,7 +731,8 @@ export default function SettingsPage() {
                       <form onSubmit={onSaveShopeeAffiliate}>
                         <DialogHeader>
                           <DialogTitle>
-                            {site.shopeeAffiliateId ? "Chỉnh sửa" : "Thiết lập"} Shopee Affiliate ID
+                            {site.shopeeAffiliateId ? "Chỉnh sửa" : "Thiết lập"}{" "}
+                            Shopee Affiliate ID
                           </DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
@@ -671,7 +751,8 @@ export default function SettingsPage() {
                               }
                             />
                             <p className="text-xs text-muted-foreground">
-                              Link sản phẩm sẽ tự động chuyển thành affiliate link khi upload lên WooCommerce
+                              Link sản phẩm sẽ tự động chuyển thành affiliate
+                              link khi upload lên WooCommerce
                             </p>
                           </div>
                         </div>
@@ -680,13 +761,19 @@ export default function SettingsPage() {
                             type="button"
                             variant="outline"
                             onClick={() => {
-                              setEditingShopeeAffiliate({ siteId: null, shopeeAffiliateId: "" });
+                              setEditingShopeeAffiliate({
+                                siteId: null,
+                                shopeeAffiliateId: "",
+                              });
                               setIsShopeeAffiliateDialogOpen(false);
                             }}
                           >
                             Hủy
                           </Button>
-                          <Button type="submit" disabled={isSavingShopeeAffiliate}>
+                          <Button
+                            type="submit"
+                            disabled={isSavingShopeeAffiliate}
+                          >
                             {isSavingShopeeAffiliate ? "Đang lưu..." : "Lưu"}
                           </Button>
                         </DialogFooter>
@@ -695,27 +782,30 @@ export default function SettingsPage() {
                   </Dialog>
                 </div>
               </div>
-          </div>
-        ))}
-        {sites && sites.length === 0 && !isLoading && (
+            </div>
+          ))}
+          {sites && sites.length === 0 && !isLoading && (
             <div className="text-center py-8 text-sm text-muted-foreground">
               Chưa có site nào. Nhấn &quot;Thêm Site Mới&quot; để bắt đầu.
             </div>
-        )}
+          )}
         </div>
       </div>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteConfirm.isOpen} onOpenChange={(open) => {
-        if (!open) {
-          setDeleteConfirm({
-            siteId: null,
-            siteName: "",
-            isOpen: false,
-            confirmText: "",
-          });
-        }
-      }}>
+      <Dialog
+        open={deleteConfirm.isOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteConfirm({
+              siteId: null,
+              siteName: "",
+              isOpen: false,
+              confirmText: "",
+            });
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Xác nhận xóa site</DialogTitle>
@@ -763,7 +853,9 @@ export default function SettingsPage() {
               type="button"
               variant="destructive"
               onClick={onRemoveSite}
-              disabled={deleteConfirm.confirmText !== `Xoá ${deleteConfirm.siteName}`}
+              disabled={
+                deleteConfirm.confirmText !== `Xoá ${deleteConfirm.siteName}`
+              }
             >
               Xoá Site
             </Button>
