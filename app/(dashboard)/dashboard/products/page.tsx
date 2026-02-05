@@ -1,8 +1,8 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import useSWR from "swr";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 
-import { fetcher, apiFetch } from '@/src/lib/fetcher';
+import { fetcher, apiFetch } from "@/src/lib/fetcher";
 
 const statusDisplay: Record<
   string,
@@ -271,7 +271,7 @@ export default function ProductsPage() {
 
   const toggleProduct = (id: string) => {
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -294,7 +294,6 @@ export default function ProductsPage() {
     setPage(1);
   };
 
-
   async function onProcessUploads() {
     try {
       setIsProcessing(true);
@@ -308,7 +307,9 @@ export default function ProductsPage() {
         throw new Error(data.message || "Không thể xử lý uploads");
       }
       const data = (await res.json()) as ProcessResponse;
-      toast.success(`Đã xử lý ${data.processed} sản phẩm, thành công ${data.success}`);
+      toast.success(
+        `Đã xử lý ${data.processed} sản phẩm, thành công ${data.success}`,
+      );
       mutateProducts();
     } catch (e: any) {
       toast.error(e.message || "Không thể xử lý uploads");
@@ -377,11 +378,11 @@ export default function ProductsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-    <h1 className="text-2xl font-semibold">Sản phẩm</h1>
+        <h1 className="text-2xl font-semibold">Sản phẩm</h1>
         <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
           Thêm sản phẩm
         </Button>
-    </div>
+      </div>
       <p className="text-sm text-muted-foreground">
         Chọn sản phẩm, cấu hình site và tạo job upload lên WooCommerce.
       </p>
@@ -457,13 +458,13 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-    <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         {selectedCount > 0 && (
           <span className="text-sm text-muted-foreground">
             Đã chọn {selectedCount} sản phẩm
           </span>
         )}
-    </div>
+      </div>
 
       <PaginationControls
         pagination={pagination}
@@ -534,7 +535,7 @@ export default function ProductsPage() {
                   <TableCell className="max-w-xs">
                     <div className="font-medium line-clamp-2">
                       {product.title || "Chưa có tiêu đề"}
-    </div>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant={status.variant}>{status.label}</Badge>
@@ -543,22 +544,36 @@ export default function ProductsPage() {
                   <TableCell>
                     {product.originalPrice != null || product.price != null ? (
                       <div className="flex flex-col gap-0.5">
-                        {product.originalPrice != null && product.price != null && product.price < product.originalPrice ? (
+                        {product.originalPrice != null &&
+                        product.price != null &&
+                        product.price < product.originalPrice ? (
                           <>
                             <span className="text-sm text-gray-500 line-through">
-                              {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}₫
+                              {new Intl.NumberFormat("vi-VN").format(
+                                product.originalPrice,
+                              )}
+                              ₫
                             </span>
                             <span className="text-base font-semibold text-red-600">
-                              {new Intl.NumberFormat("vi-VN").format(product.price)}₫
+                              {new Intl.NumberFormat("vi-VN").format(
+                                product.price,
+                              )}
+                              ₫
                             </span>
                           </>
                         ) : product.price != null ? (
                           <span className="text-base">
-                            {new Intl.NumberFormat("vi-VN").format(product.price)}₫
+                            {new Intl.NumberFormat("vi-VN").format(
+                              product.price,
+                            )}
+                            ₫
                           </span>
                         ) : product.originalPrice != null ? (
                           <span className="text-base">
-                            {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}₫
+                            {new Intl.NumberFormat("vi-VN").format(
+                              product.originalPrice,
+                            )}
+                            ₫
                           </span>
                         ) : null}
                       </div>
@@ -656,7 +671,7 @@ export default function ProductsPage() {
                       {pageNum}
                     </Button>
                   );
-                }
+                },
               )}
               <Button
                 variant="outline"
@@ -693,6 +708,7 @@ export default function ProductsPage() {
         product={viewingProduct}
         open={Boolean(viewingProduct)}
         onClose={() => setViewingProduct(null)}
+        onSaved={() => mutateProducts()}
       />
       <DeleteConfirmationDialog
         product={deletingProduct}
@@ -727,15 +743,57 @@ function ProductDetailDialog({
   product,
   open,
   onClose,
+  onSaved,
 }: {
   product: Product | null;
   open: boolean;
   onClose: () => void;
+  onSaved?: () => void;
 }) {
+  const [localImages, setLocalImages] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState<number | null>(null);
+
+  // Sync local images with product images when product changes
+  useEffect(() => {
+    if (product) {
+      setLocalImages(Array.isArray(product.images) ? product.images : []);
+    }
+  }, [product]);
+
   if (!product) return null;
 
-  const productImages = Array.isArray(product.images) ? product.images : [];
   const status = statusDisplay[product.status] ?? statusDisplay.DRAFT;
+
+  const handleDeleteImage = async (indexToDelete: number) => {
+    if (isDeleting !== null) return;
+
+    setIsDeleting(indexToDelete);
+    try {
+      const newImages = localImages.filter((_, idx) => idx !== indexToDelete);
+
+      const res = await fetch(`/api/proxy/products/${product.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ images: newImages }),
+      });
+
+      if (!res.ok) {
+        const data = await res
+          .json()
+          .catch(() => ({ message: "Không thể xoá hình" }));
+        throw new Error(data.message || "Không thể xoá hình");
+      }
+
+      setLocalImages(newImages);
+      toast.success("Đã xoá hình ảnh");
+      onSaved?.();
+    } catch (e) {
+      const error = e as Error;
+      toast.error(error.message || "Không thể xoá hình");
+    } finally {
+      setIsDeleting(null);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
@@ -745,20 +803,36 @@ function ProductDetailDialog({
         </DialogHeader>
         <div className="space-y-6">
           {/* Images */}
-          {productImages.length > 0 && (
+          {localImages.length > 0 && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Hình ảnh</label>
+              <label className="text-sm font-medium">
+                Hình ảnh ({localImages.length})
+              </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {productImages.map((imgUrl, index) => (
+                {localImages.map((imgUrl, index) => (
                   <div
                     key={index}
-                    className="relative aspect-square rounded-md overflow-hidden border"
+                    className="relative aspect-square rounded-md overflow-hidden border group"
                   >
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteImage(index)}
+                      disabled={isDeleting !== null}
+                      className="absolute top-1 right-1 z-10 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Xoá hình này"
+                    >
+                      {isDeleting === index ? (
+                        <span className="animate-spin text-xs">⏳</span>
+                      ) : (
+                        <span className="text-sm font-bold">×</span>
+                      )}
+                    </button>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={imgUrl}
                       alt={`${product.title || "Sản phẩm"} - ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-200 hover:scale-110"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src =
@@ -794,22 +868,34 @@ function ProductDetailDialog({
               <div className="text-sm">
                 {product.originalPrice != null || product.price != null ? (
                   <div className="flex flex-col gap-1">
-                    {product.originalPrice != null && product.price != null && product.price < product.originalPrice ? (
+                    {product.originalPrice != null &&
+                    product.price != null &&
+                    product.price < product.originalPrice ? (
                       <>
                         <span className="text-gray-500 line-through">
-                          Giá gốc: {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}{product.currency || "₫"}
+                          Giá gốc:{" "}
+                          {new Intl.NumberFormat("vi-VN").format(
+                            product.originalPrice,
+                          )}
+                          {product.currency || "₫"}
                         </span>
                         <span className="font-semibold text-red-600">
-                          Giá đã giảm: {new Intl.NumberFormat("vi-VN").format(product.price)}{product.currency || "₫"}
+                          Giá đã giảm:{" "}
+                          {new Intl.NumberFormat("vi-VN").format(product.price)}
+                          {product.currency || "₫"}
                         </span>
                       </>
                     ) : product.price != null ? (
                       <span>
-                        {new Intl.NumberFormat("vi-VN").format(product.price)}{product.currency || "₫"}
+                        {new Intl.NumberFormat("vi-VN").format(product.price)}
+                        {product.currency || "₫"}
                       </span>
                     ) : product.originalPrice != null ? (
                       <span>
-                        {new Intl.NumberFormat("vi-VN").format(product.originalPrice)}{product.currency || "₫"}
+                        {new Intl.NumberFormat("vi-VN").format(
+                          product.originalPrice,
+                        )}
+                        {product.currency || "₫"}
                       </span>
                     ) : null}
                   </div>
@@ -984,7 +1070,10 @@ function ProductEditDialog({
         <form className="grid gap-3" onSubmit={onSubmit}>
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">Link nguồn</label>
-            <Input placeholder="https://shopee.vn/..." {...register("sourceUrl")} />
+            <Input
+              placeholder="https://shopee.vn/..."
+              {...register("sourceUrl")}
+            />
           </div>
           <div className="grid gap-1.5">
             <label className="text-sm font-medium">Tiêu đề</label>
@@ -1303,9 +1392,9 @@ function UploadDialog({
   const [productCategories, setProductCategories] = useState<
     Record<string, string>
   >({});
-  const [newCategoryName, setNewCategoryName] = useState<Record<string, string>>(
-    {}
-  );
+  const [newCategoryName, setNewCategoryName] = useState<
+    Record<string, string>
+  >({});
   const [isCreatingCategory, setIsCreatingCategory] = useState<
     Record<string, boolean>
   >({});
@@ -1356,22 +1445,21 @@ function UploadDialog({
   useEffect(() => {
     if (categories.length > 0 && selectedProducts.length > 0) {
       const autoMatched: Record<string, string> = {};
-      
+
       selectedProducts.forEach((product) => {
         if (!product.category) return;
-        
+
         const productCatLower = product.category.toLowerCase().trim();
-        
+
         // First, try exact match (highest priority)
         let matchedCategory = categories.find((wcCat) => {
           const wcNameLower = wcCat.name.toLowerCase().trim();
           const wcSlugLower = (wcCat.slug || "").toLowerCase().trim();
           return (
-            productCatLower === wcNameLower ||
-            productCatLower === wcSlugLower
+            productCatLower === wcNameLower || productCatLower === wcSlugLower
           );
         });
-        
+
         // If no exact match, try partial match
         if (!matchedCategory) {
           matchedCategory = categories.find((wcCat) => {
@@ -1385,12 +1473,12 @@ function UploadDialog({
             );
           });
         }
-        
+
         if (matchedCategory) {
           autoMatched[product.id] = matchedCategory.wooId;
         }
       });
-      
+
       // Only update if there are matches and not already set
       if (Object.keys(autoMatched).length > 0) {
         setProductCategories((prev) => {
@@ -1446,7 +1534,7 @@ function UploadDialog({
       setIsSyncing(true);
       const res = await fetch(
         `/api/proxy/sites/${selectedSiteId}/categories/sync`,
-        { method: "POST" }
+        { method: "POST" },
       );
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: "Lỗi sync" }));
@@ -1517,11 +1605,11 @@ function UploadDialog({
 
     // Check if all products have categories selected
     const productsWithoutCategory = selectedProducts.filter(
-      (p) => !productCategories[p.id]
+      (p) => !productCategories[p.id],
     );
     if (productsWithoutCategory.length > 0) {
       toast.warning(
-        `Vui lòng chọn category cho tất cả sản phẩm. Còn ${productsWithoutCategory.length} sản phẩm chưa có category.`
+        `Vui lòng chọn category cho tất cả sản phẩm. Còn ${productsWithoutCategory.length} sản phẩm chưa có category.`,
       );
       return;
     }
@@ -1533,7 +1621,9 @@ function UploadDialog({
         const categoryId = productCategories[product.id];
         // targetCategory must always be ID (wooId), never name
         if (!categoryId) {
-          throw new Error(`Sản phẩm "${product.title}" chưa có category được chọn`);
+          throw new Error(
+            `Sản phẩm "${product.title}" chưa có category được chọn`,
+          );
         }
 
         return fetch("/api/proxy/products/upload", {
@@ -1551,12 +1641,14 @@ function UploadDialog({
       const errors = results.filter((r) => !r.ok);
       if (errors.length > 0) {
         throw new Error(
-          `Có ${errors.length} sản phẩm không thể tạo job upload`
+          `Có ${errors.length} sản phẩm không thể tạo job upload`,
         );
       }
 
       const successCount = results.length;
-      toast.success(`Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Xử lý Upload để upload sản phẩm lên WordPress.`);
+      toast.success(
+        `Đã tạo ${successCount} job upload thành công. Vui lòng vào trang Xử lý Upload để upload sản phẩm lên WordPress.`,
+      );
       onUploadSuccess();
     } catch (e: any) {
       toast.error(e.message || "Lỗi khi upload");
@@ -1662,24 +1754,26 @@ function UploadDialog({
                             [product.id]: e.target.value,
                           }))
                         }
-                        disabled={!selectedSiteId || isCreatingCategory[product.id]}
+                        disabled={
+                          !selectedSiteId || isCreatingCategory[product.id]
+                        }
                       />
-                      {product.category && 
-                       !newCategoryName[product.id] && 
-                       !productCategories[product.id] && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setNewCategoryName((prev) => ({
-                              ...prev,
-                              [product.id]: product.category || "",
-                            }))
-                          }
-                          className="text-xs text-primary hover:underline"
-                        >
-                          Dùng category từ Shopee: {product.category}
-                        </button>
-                      )}
+                      {product.category &&
+                        !newCategoryName[product.id] &&
+                        !productCategories[product.id] && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setNewCategoryName((prev) => ({
+                                ...prev,
+                                [product.id]: product.category || "",
+                              }))
+                            }
+                            className="text-xs text-primary hover:underline"
+                          >
+                            Dùng category từ Shopee: {product.category}
+                          </button>
+                        )}
                     </div>
                     <Button
                       variant="outline"
@@ -1691,9 +1785,7 @@ function UploadDialog({
                         isCreatingCategory[product.id]
                       }
                     >
-                      {isCreatingCategory[product.id]
-                        ? "Đang tạo..."
-                        : "Tạo"}
+                      {isCreatingCategory[product.id] ? "Đang tạo..." : "Tạo"}
                     </Button>
                   </div>
                 </div>
@@ -1706,7 +1798,10 @@ function UploadDialog({
           <Button variant="secondary" onClick={onClose} disabled={isUploading}>
             Huỷ
           </Button>
-          <Button onClick={handleUpload} disabled={isUploading || !selectedSiteId}>
+          <Button
+            onClick={handleUpload}
+            disabled={isUploading || !selectedSiteId}
+          >
             {isUploading ? "Đang upload..." : "Upload"}
           </Button>
         </DialogFooter>
