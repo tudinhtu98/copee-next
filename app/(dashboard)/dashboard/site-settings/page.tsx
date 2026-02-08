@@ -62,6 +62,9 @@ export default function SettingsPage() {
     siteId: null,
     shopeeAffiliateId: "",
   });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [wpTestResult, setWpTestResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [isTestingWp, setIsTestingWp] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingWooKeys, setIsSavingWooKeys] = useState(false);
   const [isSavingWpAuth, setIsSavingWpAuth] = useState(false);
@@ -93,6 +96,7 @@ export default function SettingsPage() {
     event.preventDefault();
     try {
       setIsSaving(true);
+      setFormError(null);
       const res = await fetch("/api/proxy/sites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,7 +107,9 @@ export default function SettingsPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({ message: "Lỗi lưu" }));
-        return toast.error(data.message || "Lỗi lưu");
+        const errorMsg = data.message || "Lỗi lưu";
+        setFormError(errorMsg);
+        return;
       }
       toast.success("Đã thêm site mới");
       setForm({
@@ -119,6 +125,36 @@ export default function SettingsPage() {
       mutate();
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function onTestWpCredentials() {
+    if (!form.baseUrl || !form.wpUsername || !form.wpApplicationPassword) {
+      setWpTestResult({ success: false, message: "Vui lòng nhập Base URL, Username và Application Password" });
+      return;
+    }
+    try {
+      setIsTestingWp(true);
+      setWpTestResult(null);
+      const res = await fetch("/api/proxy/sites/test-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          baseUrl: form.baseUrl,
+          wpUsername: form.wpUsername,
+          wpApplicationPassword: form.wpApplicationPassword,
+        }),
+      });
+      const data = await res.json().catch(() => ({ success: false, message: "Lỗi không xác định" }));
+      if (!res.ok) {
+        setWpTestResult({ success: false, message: data.message || "Lỗi test" });
+        return;
+      }
+      setWpTestResult(data);
+    } catch {
+      setWpTestResult({ success: false, message: "Lỗi kết nối" });
+    } finally {
+      setIsTestingWp(false);
     }
   }
 
@@ -319,7 +355,7 @@ export default function SettingsPage() {
           onOpenChange={setIsAddSiteDialogOpen}
         >
           <DialogTrigger asChild>
-            <Button onClick={() => setIsAddSiteDialogOpen(true)}>
+            <Button onClick={() => { setIsAddSiteDialogOpen(true); setFormError(null); setWpTestResult(null); }}>
               Thêm Site Mới
             </Button>
           </DialogTrigger>
@@ -400,7 +436,7 @@ export default function SettingsPage() {
                     </p>
                   </div>
                   <div className="grid gap-2">
-                    <label className="text-sm">Username</label>
+                    <label className="text-sm">Username đăng nhập WordPress</label>
                     <Input
                       placeholder="admin"
                       value={form.wpUsername}
@@ -411,6 +447,9 @@ export default function SettingsPage() {
                         }))
                       }
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Username bạn dùng để đăng nhập wp-admin (xem tại Users → All Users, cột &quot;Username&quot;)
+                    </p>
                   </div>
                   <div className="grid gap-2">
                     <label className="text-sm">Application Password</label>
@@ -426,14 +465,35 @@ export default function SettingsPage() {
                       }
                     />
                   </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isTestingWp || !form.wpUsername || !form.wpApplicationPassword || !form.baseUrl}
+                    onClick={onTestWpCredentials}
+                  >
+                    {isTestingWp ? "Đang test..." : "Test kết nối WP"}
+                  </Button>
+                  {wpTestResult && (
+                    <div className={`rounded-md border p-2 text-xs ${wpTestResult.success ? "border-green-500 bg-green-500/10 text-green-700 dark:text-green-400" : "border-destructive bg-destructive/10 text-destructive"}`}>
+                      {wpTestResult.message}
+                    </div>
+                  )}
                 </div>
               </div>
+              {formError && (
+                <div className="rounded-md border border-destructive bg-destructive/10 p-3 mb-4 text-sm text-destructive">
+                  {formError}
+                </div>
+              )}
               <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => {
                     setIsAddSiteDialogOpen(false);
+                    setFormError(null);
+                    setWpTestResult(null);
                     setForm({
                       name: "",
                       baseUrl: "",
