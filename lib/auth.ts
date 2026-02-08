@@ -216,6 +216,7 @@ export const authOptions: AuthOptions = {
                   const data = await response.json();
                   token.accessToken = data.access_token;
                   token.refreshToken = data.refresh_token;
+                  token.error = undefined;
 
                   // Update hasPassword from refreshed token
                   const refreshedPayload = decodeJwtPayload(data.access_token);
@@ -223,14 +224,12 @@ export const authOptions: AuthOptions = {
                     token.hasPassword = refreshedPayload.hasPassword;
                   }
                 } else {
-                  // Refresh token không hợp lệ, xóa token
-                  token.accessToken = null;
-                  token.refreshToken = null;
+                  // Refresh token không hợp lệ → đánh dấu lỗi để client tự logout
+                  token.error = "RefreshAccessTokenError";
                 }
               }
             } catch (error) {
-              token.accessToken = null;
-              token.refreshToken = null;
+              token.error = "RefreshAccessTokenError";
             }
           }
         }
@@ -254,6 +253,10 @@ export const authOptions: AuthOptions = {
     async session({ session, token }: any) {
       (session as any).accessToken = (token as any).accessToken;
       (session as any).refreshToken = (token as any).refreshToken;
+      // Truyền lỗi refresh token để client có thể detect và tự logout
+      if ((token as any).error) {
+        (session as any).error = (token as any).error;
+      }
 
       // Decode access token để lấy email từ JWT payload
       const payload = decodeJwtPayload((token as any).accessToken);
