@@ -196,8 +196,8 @@ export const authOptions: AuthOptions = {
           const now = Date.now();
           const timeUntilExpiry = expiresAt - now;
 
-          // Nếu token còn < 5 phút thì refresh
-          if (timeUntilExpiry < 5 * 60 * 1000 && (token as any).refreshToken) {
+          // Nếu token còn < 10 phút thì refresh
+          if (timeUntilExpiry < 10 * 60 * 1000 && (token as any).refreshToken) {
             try {
               const baseUrl =
                 process.env.API_BASE_URL?.replace(/\/$/, "") ||
