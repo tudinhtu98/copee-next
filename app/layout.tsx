@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import AppHeader from "@/components/app-header";
 import Providers from "@/src/app/providers";
 import { SetPasswordModal } from "@/components/set-password-modal";
+import ContactBar from "@/components/contact-bar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,8 +39,7 @@ export default function RootLayout({
           {children}
           <SetPasswordModal />
         </Providers>
-        <Script id="metu-id" strategy="beforeInteractive">{`window.MBID="7sRZCy3Aw";`}</Script>
-        <Script src="https://menu.metu.vn/static/js/sdk.js?container=body" strategy="beforeInteractive" />
+        <ContactBar />
       </body>
     </html>
   );
