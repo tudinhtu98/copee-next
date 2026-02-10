@@ -39,8 +39,8 @@ export default function RootLayout({
           {children}
           <SetPasswordModal />
         </Providers>
-        <Script id="metu-id" strategy="afterInteractive">{`window.MBID="7sRZCy3Aw";`}</Script>
-        <Script src="https://menu.metu.vn/static/js/sdk.js?container=body" strategy="afterInteractive" />
+        <Script id="metu-id" strategy="beforeInteractive">{`window.MBID="7sRZCy3Aw";`}</Script>
+        <Script src="https://menu.metu.vn/static/js/sdk.js?container=body" strategy="beforeInteractive" />
       </body>
     </html>
   );
