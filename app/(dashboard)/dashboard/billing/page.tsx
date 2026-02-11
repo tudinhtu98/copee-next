@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
+import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
-
 import { fetcher } from '@/src/lib/fetcher'
 
 type BalanceResponse = {
@@ -14,7 +15,22 @@ type SpendingResponse = {
   amount: number
 }
 
+const AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000]
+
+function sanitizeUsername(username: string) {
+  return username.replace(/[^a-zA-Z0-9]/g, ' ').trim()
+}
+
+function buildQrUrl(amount: number, username: string) {
+  const info = `nap copee ${sanitizeUsername(username)}`
+  return `https://api.vietqr.io/image/970436-0071001129307-d0xVMVh.jpg?accountName=HOANG%20THANH%20LONG&amount=${amount}&addInfo=${encodeURIComponent(info)}`
+}
+
 export default function BillingPage() {
+  const { data: session } = useSession() as any
+  const username = session?.user?.username || session?.user?.name || ''
+  const [selectedAmount, setSelectedAmount] = useState(50000)
+
   const {
     data: balance,
     error,
@@ -52,15 +68,46 @@ export default function BillingPage() {
             ? new Intl.NumberFormat('vi-VN').format(spending.amount) + '₫'
             : '...'}
         </div>
-        <div className="rounded-md bg-muted p-4 text-center">
-          <p className="text-sm font-medium text-muted-foreground">
-            Tính năng nạp tiền đang được cập nhật
-          </p>
-          <p className="text-lg font-semibold mt-1">Sắp có mặt</p>
-          <p className="text-xs text-muted-foreground mt-2">
-            Vui lòng liên hệ Admin để nạp tiền vào tài khoản
-          </p>
+      </div>
+
+      <div className="rounded-md border p-4 space-y-4">
+        <h2 className="text-lg font-semibold">Chọn số tiền nạp</h2>
+        <div className="flex flex-wrap gap-2">
+          {AMOUNTS.map((amount) => (
+            <Button
+              key={amount}
+              variant={selectedAmount === amount ? 'default' : 'outline'}
+              onClick={() => setSelectedAmount(amount)}
+            >
+              {new Intl.NumberFormat('vi-VN').format(amount)}₫
+            </Button>
+          ))}
         </div>
+
+        {username && (
+          <div className="flex flex-col items-center gap-4 pt-4">
+            <p className="text-lg text-muted-foreground">
+              Quét mã QR để chuyển khoản{' '}
+              <span className="font-bold text-foreground text-xl">
+                {new Intl.NumberFormat('vi-VN').format(selectedAmount)}₫
+              </span>
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={selectedAmount}
+              src={buildQrUrl(selectedAmount, username)}
+              alt="QR chuyển khoản"
+              className="w-80 rounded-md border"
+            />
+            <p className="text-base text-muted-foreground">
+              Nội dung CK:{' '}
+              <span className="font-semibold text-foreground">nap copee {sanitizeUsername(username)}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Số dư sẽ được cộng sau khi chuyển khoản thành công. Có thể nhắn tin thông qua kênh Hỗ trợ để được cộng số dư nhanh hơn.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
