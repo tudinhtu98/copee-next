@@ -15,7 +15,20 @@ type SpendingResponse = {
   amount: number
 }
 
-const AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000]
+const AMOUNTS = [
+  { value: 10000, discount: 0 },
+  { value: 20000, discount: 0 },
+  { value: 50000, discount: 0 },
+  { value: 100000, discount: 0 },
+  { value: 200000, discount: 0 },
+  { value: 300000, discount: 5 },
+  { value: 500000, discount: 15 },
+  { value: 1000000, discount: 20 },
+]
+
+function getDiscount(amount: number) {
+  return AMOUNTS.find((a) => a.value === amount)?.discount ?? 0
+}
 
 function sanitizeUsername(username: string) {
   return username.replace(/[^a-zA-Z0-9]/g, ' ').trim()
@@ -73,15 +86,26 @@ export default function BillingPage() {
       <div className="rounded-md border p-4 space-y-4">
         <h2 className="text-lg font-semibold">Chọn số tiền nạp</h2>
         <div className="flex flex-wrap gap-2">
-          {AMOUNTS.map((amount) => (
+          {AMOUNTS.map(({ value, discount }) => (
             <Button
-              key={amount}
-              variant={selectedAmount === amount ? 'default' : 'outline'}
-              onClick={() => setSelectedAmount(amount)}
+              key={value}
+              variant={selectedAmount === value ? 'default' : 'outline'}
+              onClick={() => setSelectedAmount(value)}
+              className="relative"
             >
-              {new Intl.NumberFormat('vi-VN').format(amount)}₫
+              {new Intl.NumberFormat('vi-VN').format(value)}₫
+              {discount > 0 && (
+                <span className="absolute -top-2 -right-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                  +{discount}%
+                </span>
+              )}
             </Button>
           ))}
+          <Button variant="outline" asChild>
+            <a href="https://hoanglongteam.bio.link" target="_blank" rel="noopener noreferrer">
+              Nạp nhiều hơn (liên hệ)
+            </a>
+          </Button>
         </div>
 
         {username && (
@@ -91,6 +115,11 @@ export default function BillingPage() {
               <span className="font-bold text-foreground text-xl">
                 {new Intl.NumberFormat('vi-VN').format(selectedAmount)}₫
               </span>
+              {getDiscount(selectedAmount) > 0 && (
+                <span className="ml-2 text-sm font-semibold text-green-600">
+                  (được cộng {new Intl.NumberFormat('vi-VN').format(selectedAmount * (1 + getDiscount(selectedAmount) / 100))}₫)
+                </span>
+              )}
             </p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

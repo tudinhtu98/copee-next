@@ -63,6 +63,26 @@ type UserFormValues = {
   role: "USER" | "MOD" | "ADMIN";
 };
 
+const CREDIT_PRESETS = [
+  { value: 10000, discount: 0 },
+  { value: 20000, discount: 0 },
+  { value: 50000, discount: 0 },
+  { value: 100000, discount: 0 },
+  { value: 200000, discount: 0 },
+  { value: 300000, discount: 5 },
+  { value: 500000, discount: 15 },
+  { value: 1000000, discount: 20 },
+];
+
+function getPresetDiscount(amount: number) {
+  return CREDIT_PRESETS.find((p) => p.value === amount)?.discount ?? 0;
+}
+
+function calcTotal(amount: number) {
+  const discount = getPresetDiscount(amount);
+  return discount > 0 ? Math.round(amount * (1 + discount / 100)) : amount;
+}
+
 const roleDisplay: Record<
   string,
   {
@@ -94,6 +114,7 @@ export default function AdminUsers() {
   const [creditingUser, setCreditingUser] = useState<User | null>(null);
   const [creditAmount, setCreditAmount] = useState("");
   const [creditReference, setCreditReference] = useState("");
+  const [isPreset, setIsPreset] = useState(false);
   const [formData, setFormData] = useState<UserFormValues>({
     email: "",
     username: "",
@@ -281,25 +302,33 @@ export default function AdminUsers() {
     setCreditingUser(user);
     setCreditAmount("");
     setCreditReference("");
+    setIsPreset(false);
     setIsCreditDialogOpen(true);
   };
 
   const handleCredit = useCallback(async () => {
     if (!creditingUser) return;
 
-    const amount = parseInt(creditAmount);
-    if (!amount || amount <= 0) {
+    const baseAmount = parseInt(creditAmount);
+    if (!baseAmount || baseAmount <= 0) {
       toast.error("Số tiền phải lớn hơn 0");
       return;
     }
+
+    const discount = isPreset ? getPresetDiscount(baseAmount) : 0;
+    const totalAmount = discount > 0 ? calcTotal(baseAmount) : baseAmount;
+    const ref = creditReference
+      || (discount > 0
+        ? `admin:manual-credit (+${discount}% extra)`
+        : "admin:manual-credit");
 
     try {
       const res = await apiFetch(`/admin/users/${creditingUser.id}/credit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount,
-          reference: creditReference || "admin:manual-credit",
+          amount: totalAmount,
+          reference: ref,
         }),
       });
 
@@ -308,16 +337,17 @@ export default function AdminUsers() {
         throw new Error(error.message || "Không thể nạp tiền");
       }
 
-      toast.success(`Đã nạp ${new Intl.NumberFormat("vi-VN").format(amount)}₫ cho ${creditingUser.username}`);
+      toast.success(`Đã nạp ${new Intl.NumberFormat("vi-VN").format(totalAmount)}₫ cho ${creditingUser.username}${discount > 0 ? ` (gồm +${discount}% extra)` : ""}`);
       setIsCreditDialogOpen(false);
       setCreditingUser(null);
       setCreditAmount("");
       setCreditReference("");
+      setIsPreset(false);
       mutate();
     } catch (error: any) {
       toast.error(error.message || "Không thể nạp tiền");
     }
-  }, [creditingUser, creditAmount, creditReference, mutate]);
+  }, [creditingUser, creditAmount, creditReference, isPreset, mutate]);
 
   // Update search in URL
   useEffect(() => {
@@ -650,7 +680,7 @@ export default function AdminUsers() {
 
       {/* Credit Dialog */}
       <Dialog open={isCreditDialogOpen} onOpenChange={setIsCreditDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Nạp tiền cho user</DialogTitle>
           </DialogHeader>
@@ -663,15 +693,67 @@ export default function AdminUsers() {
               </p>
             </div>
             <div>
-              <label className="text-sm font-medium">Số tiền nạp (₫)</label>
+              <label className="text-sm font-medium mb-2 block">Chọn nhanh</label>
+              <div className="flex flex-wrap gap-2">
+                {CREDIT_PRESETS.map(({ value, discount }) => (
+                  <Button
+                    key={value}
+                    type="button"
+                    size="sm"
+                    variant={isPreset && creditAmount === String(value) ? "default" : "outline"}
+                    className="relative"
+                    onClick={() => {
+                      setCreditAmount(String(value));
+                      setIsPreset(true);
+                    }}
+                  >
+                    {new Intl.NumberFormat("vi-VN").format(value)}₫
+                    {discount > 0 && (
+                      <span className="absolute -top-2 -right-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
+                        +{discount}%
+                      </span>
+                    )}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Hoặc nhập số tiền (₫)</label>
               <Input
                 type="number"
                 value={creditAmount}
-                onChange={(e) => setCreditAmount(e.target.value)}
+                onChange={(e) => {
+                  setCreditAmount(e.target.value);
+                  setIsPreset(false);
+                }}
                 placeholder="100000"
                 min="1"
               />
             </div>
+            {creditAmount && parseInt(creditAmount) > 0 && (
+              <div className="rounded-md border bg-green-50 p-3 text-sm dark:bg-green-950">
+                {isPreset && getPresetDiscount(parseInt(creditAmount)) > 0 ? (
+                  <p>
+                    Nạp{" "}
+                    <span className="font-semibold">
+                      {new Intl.NumberFormat("vi-VN").format(parseInt(creditAmount))}₫
+                    </span>
+                    {" "}+ extra {getPresetDiscount(parseInt(creditAmount))}% ={" "}
+                    <span className="font-bold text-green-600 dark:text-green-400">
+                      {new Intl.NumberFormat("vi-VN").format(calcTotal(parseInt(creditAmount)))}₫
+                    </span>
+                  </p>
+                ) : (
+                  <p>
+                    Sẽ cộng{" "}
+                    <span className="font-semibold">
+                      {new Intl.NumberFormat("vi-VN").format(parseInt(creditAmount))}₫
+                    </span>
+                    {" "}vào tài khoản
+                  </p>
+                )}
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium">Ghi chú (tùy chọn)</label>
               <Input
