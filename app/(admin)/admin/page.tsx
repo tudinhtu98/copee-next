@@ -183,13 +183,13 @@ export default function AdminHome() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Đã chi</span>
                 <span className="text-lg font-semibold text-red-600">
-                  {new Intl.NumberFormat("vi-VN").format(transactions.spent)}₫
+                  {new Intl.NumberFormat("vi-VN").format(transactions.spent)} điểm
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Đã nạp</span>
                 <span className="text-lg font-semibold text-green-600">
-                  {new Intl.NumberFormat("vi-VN").format(transactions.credited)}₫
+                  {new Intl.NumberFormat("vi-VN").format(transactions.credited)} điểm
                 </span>
               </div>
             </div>

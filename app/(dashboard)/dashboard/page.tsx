@@ -51,7 +51,7 @@ export default function DashboardHome() {
             {hasBalanceError
               ? "Không thể tải"
               : balance
-              ? new Intl.NumberFormat("vi-VN").format(balance.balance) + "₫"
+              ? new Intl.NumberFormat("vi-VN").format(balance.balance) + " điểm"
               : "..."}
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function DashboardHome() {
           </div>
           <div className="text-lg font-semibold">
             {spending
-              ? new Intl.NumberFormat("vi-VN").format(spending.amount) + "₫"
+              ? new Intl.NumberFormat("vi-VN").format(spending.amount) + " điểm"
               : "..."}
           </div>
         </div>

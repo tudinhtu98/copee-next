@@ -337,7 +337,7 @@ export default function AdminUsers() {
         throw new Error(error.message || "Không thể nạp tiền");
       }
 
-      toast.success(`Đã nạp ${new Intl.NumberFormat("vi-VN").format(totalAmount)}₫ cho ${creditingUser.username}${discount > 0 ? ` (gồm +${discount}% extra)` : ""}`);
+      toast.success(`Đã nạp ${new Intl.NumberFormat("vi-VN").format(totalAmount)} điểm cho ${creditingUser.username}${discount > 0 ? ` (gồm +${discount}% extra)` : ""}`);
       setIsCreditDialogOpen(false);
       setCreditingUser(null);
       setCreditAmount("");
@@ -439,7 +439,7 @@ export default function AdminUsers() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Intl.NumberFormat("vi-VN").format(user.balance)}₫
+                        {new Intl.NumberFormat("vi-VN").format(user.balance)} điểm
                       </TableCell>
                       <TableCell>
                         {user.bannedAt ? (
@@ -689,7 +689,7 @@ export default function AdminUsers() {
               <p className="text-sm font-medium">User: {creditingUser?.username}</p>
               <p className="text-sm text-muted-foreground">Email: {creditingUser?.email}</p>
               <p className="text-sm text-muted-foreground">
-                Số dư hiện tại: {creditingUser ? new Intl.NumberFormat("vi-VN").format(creditingUser.balance) : 0}₫
+                Số dư hiện tại: {creditingUser ? new Intl.NumberFormat("vi-VN").format(creditingUser.balance) : 0} điểm
               </p>
             </div>
             <div>
@@ -707,7 +707,7 @@ export default function AdminUsers() {
                       setIsPreset(true);
                     }}
                   >
-                    {new Intl.NumberFormat("vi-VN").format(value)}₫
+                    {new Intl.NumberFormat("vi-VN").format(value)} điểm
                     {discount > 0 && (
                       <span className="absolute -top-2 -right-2 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white leading-none">
                         +{discount}%
@@ -718,7 +718,7 @@ export default function AdminUsers() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">Hoặc nhập số tiền (₫)</label>
+              <label className="text-sm font-medium">Hoặc nhập số điểm</label>
               <Input
                 type="number"
                 value={creditAmount}
@@ -736,18 +736,18 @@ export default function AdminUsers() {
                   <p>
                     Nạp{" "}
                     <span className="font-semibold">
-                      {new Intl.NumberFormat("vi-VN").format(parseInt(creditAmount))}₫
+                      {new Intl.NumberFormat("vi-VN").format(parseInt(creditAmount))} điểm
                     </span>
                     {" "}+ extra {getPresetDiscount(parseInt(creditAmount))}% ={" "}
                     <span className="font-bold text-green-600 dark:text-green-400">
-                      {new Intl.NumberFormat("vi-VN").format(calcTotal(parseInt(creditAmount)))}₫
+                      {new Intl.NumberFormat("vi-VN").format(calcTotal(parseInt(creditAmount)))} điểm
                     </span>
                   </p>
                 ) : (
                   <p>
                     Sẽ cộng{" "}
                     <span className="font-semibold">
-                      {new Intl.NumberFormat("vi-VN").format(parseInt(creditAmount))}₫
+                      {new Intl.NumberFormat("vi-VN").format(parseInt(creditAmount))} điểm
                     </span>
                     {" "}vào tài khoản
                   </p>

@@ -72,13 +72,13 @@ export default function BillingPage() {
           {error
             ? 'Không thể tải'
             : balance
-            ? new Intl.NumberFormat('vi-VN').format(balance.balance) + '₫'
+            ? new Intl.NumberFormat('vi-VN').format(balance.balance) + ' điểm'
             : '...'}
         </div>
         <div className="text-sm text-muted-foreground">
           Chi tiêu 7 ngày gần nhất:{' '}
           {spending
-            ? new Intl.NumberFormat('vi-VN').format(spending.amount) + '₫'
+            ? new Intl.NumberFormat('vi-VN').format(spending.amount) + ' điểm'
             : '...'}
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function BillingPage() {
               </span>
               {getDiscount(selectedAmount) > 0 && (
                 <span className="ml-2 text-sm font-semibold text-green-600">
-                  (được cộng {new Intl.NumberFormat('vi-VN').format(selectedAmount * (1 + getDiscount(selectedAmount) / 100))}₫)
+                  (được cộng {new Intl.NumberFormat('vi-VN').format(selectedAmount * (1 + getDiscount(selectedAmount) / 100))} điểm)
                 </span>
               )}
             </p>

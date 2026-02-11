@@ -69,7 +69,7 @@ export default function BillingHistoryPage() {
   const pagination = transactionsData?.pagination;
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN").format(Math.abs(amount)) + "₫";
+    return new Intl.NumberFormat("vi-VN").format(Math.abs(amount)) + " điểm";
   };
 
   const formatDate = (dateString: string) => {
@@ -154,7 +154,7 @@ export default function BillingHistoryPage() {
             <TableRow>
               <TableHead>Ngày giờ</TableHead>
               <TableHead>Loại</TableHead>
-              <TableHead>Số tiền</TableHead>
+              <TableHead>Số điểm</TableHead>
               <TableHead>Tham chiếu</TableHead>
               <TableHead>Mô tả</TableHead>
             </TableRow>

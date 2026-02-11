@@ -479,7 +479,7 @@ export default function AdminStats() {
                           <TableCell className="text-muted-foreground">{user.email}</TableCell>
                           <TableCell className="text-right">
                             <span className="font-semibold text-red-600">
-                    {new Intl.NumberFormat("vi-VN").format(user.spent)}₫
+                    {new Intl.NumberFormat("vi-VN").format(user.spent)} điểm
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
