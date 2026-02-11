@@ -5,6 +5,17 @@ import { usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import {
+  LayoutDashboardIcon,
+  PackageIcon,
+  UploadIcon,
+  FolderTreeIcon,
+  GlobeIcon,
+  KeyIcon,
+  WalletIcon,
+  ShieldIcon,
+  type LucideIcon,
+} from "lucide-react";
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
@@ -23,18 +34,18 @@ export default function DashboardSidebar() {
     return "overview";
   };
 
-  const navItems = [
-    { value: "overview", href: "/dashboard", label: "Tổng quan" },
-    { value: "products", href: "/dashboard/products", label: "Sản phẩm" },
-    { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Xử lý Upload" },
-    { value: "categories", href: "/dashboard/categories", label: "Danh mục" },
-    { value: "site-settings", href: "/dashboard/site-settings", label: "Cài đặt WordPress" },
-    { value: "api-keys", href: "/dashboard/api-keys", label: "API Key cho Extension" },
-    { value: "billing", href: "/dashboard/billing", label: "Nạp tiền & Lịch sử" },
+  const navItems: { value: string; href: string; label: string; icon: LucideIcon }[] = [
+    { value: "overview", href: "/dashboard", label: "Tổng quan", icon: LayoutDashboardIcon },
+    { value: "products", href: "/dashboard/products", label: "Sản phẩm", icon: PackageIcon },
+    { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Xử lý Upload", icon: UploadIcon },
+    { value: "categories", href: "/dashboard/categories", label: "Danh mục", icon: FolderTreeIcon },
+    { value: "site-settings", href: "/dashboard/site-settings", label: "Cài đặt WordPress", icon: GlobeIcon },
+    { value: "api-keys", href: "/dashboard/api-keys", label: "API Key cho Extension", icon: KeyIcon },
+    { value: "billing", href: "/dashboard/billing", label: "Nạp tiền & Lịch sử", icon: WalletIcon },
   ];
 
   if (role === "ADMIN" || role === "MOD") {
-    navItems.push({ value: "admin", href: "/admin", label: "Admin" });
+    navItems.push({ value: "admin", href: "/admin", label: "Admin", icon: ShieldIcon });
   }
 
   return (
@@ -54,7 +65,10 @@ export default function DashboardSidebar() {
                 "data-[state=inactive]:text-muted-foreground"
               )}
             >
-              <Link href={item.href}>{item.label}</Link>
+              <Link href={item.href} className="flex items-center gap-2">
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
             </TabsTrigger>
           ))}
         </TabsList>

@@ -4,6 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import {
+  LayoutDashboardIcon,
+  BarChart3Icon,
+  UsersIcon,
+  GlobeIcon,
+  FolderTreeIcon,
+  PackageIcon,
+  ScrollTextIcon,
+  type LucideIcon,
+} from "lucide-react";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -20,14 +30,14 @@ export default function AdminSidebar() {
     return "overview";
   };
 
-  const navItems = [
-    { value: "overview", href: "/admin", label: "Tổng quan" },
-    { value: "stats", href: "/admin/stats", label: "Top thống kê" },
-    { value: "users", href: "/admin/users", label: "Quản lý user" },
-    { value: "sites", href: "/admin/sites", label: "Quản lý Site" },
-    { value: "categories", href: "/admin/categories", label: "Quản lý danh mục" },
-    { value: "products", href: "/admin/products", label: "Quản lý sản phẩm" },
-    { value: "audit-logs", href: "/admin/audit-logs", label: "Nhật ký hoạt động" },
+  const navItems: { value: string; href: string; label: string; icon: LucideIcon }[] = [
+    { value: "overview", href: "/admin", label: "Tổng quan", icon: LayoutDashboardIcon },
+    { value: "stats", href: "/admin/stats", label: "Top thống kê", icon: BarChart3Icon },
+    { value: "users", href: "/admin/users", label: "Quản lý user", icon: UsersIcon },
+    { value: "sites", href: "/admin/sites", label: "Quản lý Site", icon: GlobeIcon },
+    { value: "categories", href: "/admin/categories", label: "Quản lý danh mục", icon: FolderTreeIcon },
+    { value: "products", href: "/admin/products", label: "Quản lý sản phẩm", icon: PackageIcon },
+    { value: "audit-logs", href: "/admin/audit-logs", label: "Nhật ký hoạt động", icon: ScrollTextIcon },
   ];
 
   return (
@@ -47,7 +57,10 @@ export default function AdminSidebar() {
                 "data-[state=inactive]:text-muted-foreground"
               )}
             >
-              <Link href={item.href}>{item.label}</Link>
+              <Link href={item.href} className="flex items-center gap-2">
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
             </TabsTrigger>
           ))}
         </TabsList>

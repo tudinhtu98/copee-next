@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { fetcher, apiFetch } from "@/src/lib/fetcher";
-import { XIcon } from "lucide-react";
+import { XIcon, PlusIcon, PencilIcon, Trash2Icon, BanIcon, CheckCircleIcon, WalletIcon, SaveIcon, CoinsIcon } from "lucide-react";
 
 type User = {
   id: string;
@@ -373,7 +373,7 @@ export default function AdminUsers() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
       <h1 className="text-2xl font-semibold">Quản lý user</h1>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>Thêm user</Button>
+        <Button onClick={() => setIsCreateDialogOpen(true)}><PlusIcon className="h-4 w-4" /> Thêm user</Button>
       </div>
 
       {/* Search Input */}
@@ -458,7 +458,7 @@ export default function AdminUsers() {
                             size="sm"
                             onClick={() => openCreditDialog(user)}
                           >
-                            Nạp tiền
+                            <WalletIcon className="h-3.5 w-3.5" /> Nạp
                           </Button>
                           <Button
                             variant="outline"
@@ -466,7 +466,7 @@ export default function AdminUsers() {
                             onClick={() => openEditDialog(user)}
                             disabled={isMod && user.role !== "USER"}
                           >
-                            Sửa
+                            <PencilIcon className="h-3.5 w-3.5" /> Sửa
                           </Button>
                           {user.bannedAt ? (
                             <Button
@@ -475,7 +475,7 @@ export default function AdminUsers() {
                               onClick={() => handleUnban(user.id)}
                               disabled={isMod && user.role !== "USER"}
                             >
-                              Unban
+                              <CheckCircleIcon className="h-3.5 w-3.5" /> Unban
                             </Button>
                           ) : (
                             <Button
@@ -484,7 +484,7 @@ export default function AdminUsers() {
                               onClick={() => handleBan(user.id)}
                               disabled={isMod && user.role !== "USER"}
                             >
-                              Ban
+                              <BanIcon className="h-3.5 w-3.5" /> Ban
                             </Button>
                           )}
                           <Button
@@ -493,7 +493,7 @@ export default function AdminUsers() {
                             onClick={() => handleDelete(user.id)}
                             disabled={isMod && user.role !== "USER"}
                           >
-                            Xóa
+                            <Trash2Icon className="h-3.5 w-3.5" /> Xóa
                           </Button>
                         </div>
                       </TableCell>
@@ -603,7 +603,7 @@ export default function AdminUsers() {
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Hủy
             </Button>
-            <Button onClick={handleCreate}>Tạo</Button>
+            <Button onClick={handleCreate}><PlusIcon className="h-4 w-4" /> Tạo</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -673,7 +673,7 @@ export default function AdminUsers() {
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Hủy
             </Button>
-            <Button onClick={handleUpdate}>Cập nhật</Button>
+            <Button onClick={handleUpdate}><SaveIcon className="h-4 w-4" /> Cập nhật</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -767,7 +767,7 @@ export default function AdminUsers() {
             <Button variant="outline" onClick={() => setIsCreditDialogOpen(false)}>
               Hủy
             </Button>
-            <Button onClick={handleCredit}>Nạp tiền</Button>
+            <Button onClick={handleCredit}><CoinsIcon className="h-4 w-4" /> Nạp tiền</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

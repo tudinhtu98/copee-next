@@ -27,7 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { XIcon } from "lucide-react";
+import { XIcon, EyeIcon } from "lucide-react";
 
 
 type AuditLog = {
@@ -246,7 +246,7 @@ export default function AuditLogsPage() {
                       size="sm"
                       onClick={() => setSelectedLog(log)}
                     >
-                      Xem
+                      <EyeIcon className="h-4 w-4" />Xem
                     </Button>
                   </TableCell>
                 </TableRow>

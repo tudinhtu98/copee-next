@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { SettingsIcon, RefreshCwIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import useSWR from "swr";
 
 const fetcher = async <T,>(url: string): Promise<T> => {
@@ -166,7 +167,7 @@ export function CategoryMappingsDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Quản lý categories
+          <SettingsIcon className="h-4 w-4" />Quản lý categories
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -193,7 +194,7 @@ export function CategoryMappingsDialog({
               onClick={onSyncCategories}
               disabled={isSyncing}
             >
-              {isSyncing ? "Đang sync..." : "Sync Categories"}
+              <RefreshCwIcon className="h-4 w-4" />{isSyncing ? "Đang sync..." : "Sync Categories"}
             </Button>
           </div>
           <form className="grid gap-3" onSubmit={onSave}>
@@ -235,7 +236,7 @@ export function CategoryMappingsDialog({
               )}
             </div>
             <Button type="submit" disabled={isSaving}>
-              {isSaving ? "Đang thêm..." : "Thêm mapping"}
+              <PlusIcon className="h-4 w-4" />{isSaving ? "Đang thêm..." : "Thêm mapping"}
             </Button>
           </form>
 
@@ -272,7 +273,7 @@ export function CategoryMappingsDialog({
                     size="sm"
                     onClick={() => onDelete(mapping.id)}
                   >
-                    Xoá
+                    <Trash2Icon className="h-4 w-4" />Xoá
                   </Button>
                 </div>
               ))}

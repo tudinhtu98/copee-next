@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { PlusIcon, CopyIcon, XIcon, Trash2Icon } from "lucide-react";
 
 type ApiKey = {
   id: string;
@@ -144,7 +145,7 @@ export default function ApiKeysPage() {
           </div>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Tạo API Key</Button>
+              <Button><PlusIcon className="h-4 w-4" />Tạo API Key</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
@@ -206,13 +207,13 @@ export default function ApiKeysPage() {
                 onClick={() => copyToClipboard(createdKey.key)}
                 variant="outline"
               >
-                {copied ? "✓ Đã copy" : "Copy"}
+                {copied ? "✓ Đã copy" : <><CopyIcon className="h-4 w-4" />Copy</>}
               </Button>
               <Button
                 onClick={() => setCreatedKey(null)}
                 variant="outline"
               >
-                Đóng
+                <XIcon className="h-4 w-4" />Đóng
               </Button>
             </div>
           </div>
@@ -263,7 +264,7 @@ export default function ApiKeysPage() {
                       size="sm"
                       onClick={() => handleRevokeApiKey(key.id)}
                     >
-                      Thu hồi
+                      <Trash2Icon className="h-4 w-4" />Thu hồi
                     </Button>
                   </TableCell>
                 </TableRow>

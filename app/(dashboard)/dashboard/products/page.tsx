@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 
 import { fetcher, apiFetch } from "@/src/lib/fetcher";
+import { PlusIcon, Trash2Icon, UploadIcon, EyeIcon, PencilIcon, CheckSquareIcon, SquareIcon, RefreshCwIcon } from "lucide-react";
 
 const statusDisplay: Record<
   string,
@@ -380,7 +381,7 @@ export default function ProductsPage() {
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-semibold">Sản phẩm</h1>
         <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
-          Thêm sản phẩm
+          <PlusIcon className="h-4 w-4" />Thêm sản phẩm
         </Button>
       </div>
       <p className="text-sm text-muted-foreground">
@@ -435,14 +436,14 @@ export default function ProductsPage() {
           onClick={toggleSelectAll}
           disabled={!products || products.length === 0}
         >
-          {allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}
+          {allSelected ? <><SquareIcon className="h-4 w-4" />Bỏ chọn tất cả</> : <><CheckSquareIcon className="h-4 w-4" />Chọn tất cả</>}
         </Button>
         <Button
           variant="destructive"
           onClick={() => setShowBulkDeleteConfirm(true)}
           disabled={selected.length === 0}
         >
-          Xóa đã chọn ({selected.length})
+          <Trash2Icon className="h-4 w-4" />Xóa đã chọn ({selected.length})
         </Button>
         <Button
           onClick={() => {
@@ -454,7 +455,7 @@ export default function ProductsPage() {
           }}
           disabled={selected.length === 0}
         >
-          Upload ({selected.length})
+          <UploadIcon className="h-4 w-4" />Upload ({selected.length})
         </Button>
       </div>
 
@@ -588,21 +589,21 @@ export default function ProductsPage() {
                         size="sm"
                         onClick={() => setViewingProduct(product)}
                       >
-                        Xem chi tiết
+                        <EyeIcon className="h-4 w-4" />Xem chi tiết
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setEditingProduct(product)}
                       >
-                        Chỉnh sửa
+                        <PencilIcon className="h-4 w-4" />Chỉnh sửa
                       </Button>
                       <Button
                         variant="destructive"
                         size="sm"
                         onClick={() => setDeletingProduct(product)}
                       >
-                        Xóa
+                        <Trash2Icon className="h-4 w-4" />Xóa
                       </Button>
                     </div>
                   </TableCell>
@@ -1691,7 +1692,7 @@ function UploadDialog({
                   onClick={syncCategories}
                   disabled={isSyncing}
                 >
-                  {isSyncing ? "Đang sync..." : "Sync Categories"}
+                  <RefreshCwIcon className="h-4 w-4" />{isSyncing ? "Đang sync..." : "Sync Categories"}
                 </Button>
                 {isLoadingCategories && (
                   <span className="text-sm text-muted-foreground">

@@ -5,6 +5,7 @@ import useSWR from 'swr'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
+import { HistoryIcon } from 'lucide-react'
 import { fetcher } from '@/src/lib/fetcher'
 
 type BalanceResponse = {
@@ -63,7 +64,7 @@ export default function BillingPage() {
           </p>
         </div>
         <Link href="/dashboard/billing/history">
-          <Button variant="outline">Xem lịch sử giao dịch</Button>
+          <Button variant="outline"><HistoryIcon className="h-4 w-4" />Xem lịch sử giao dịch</Button>
         </Link>
       </div>
       <div className="rounded-md border p-4 space-y-3">

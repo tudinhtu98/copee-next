@@ -67,6 +67,7 @@ type Site = {
 };
 
 import { fetcher } from '@/src/lib/fetcher';
+import { XCircleIcon, PlayIcon } from "lucide-react";
 
 export default function UploadJobsPage() {
   const router = useRouter();
@@ -337,9 +338,10 @@ export default function UploadJobsPage() {
             variant="destructive"
             className="shrink-0"
           >
-            {isCancelling 
-              ? "Đang hủy..." 
-              : selectedJobs.size > 0 
+            <XCircleIcon className="h-4 w-4" />
+            {isCancelling
+              ? "Đang hủy..."
+              : selectedJobs.size > 0
                 ? `Hủy ${selectedJobs.size} job đã chọn`
                 : "Hủy job"}
           </Button>
@@ -348,8 +350,9 @@ export default function UploadJobsPage() {
             disabled={isProcessing || isCancelling}
             className="bg-blue-600 hover:bg-blue-700 shrink-0"
           >
-            {isProcessing 
-              ? "Đang xử lý..." 
+            <PlayIcon className="h-4 w-4" />
+            {isProcessing
+              ? "Đang xử lý..."
               : selectedJobs.size > 0
                 ? `Xử lý ${selectedJobs.size} job đã chọn`
                 : "Xử lý tất cả Đang chờ/Thất bại"}

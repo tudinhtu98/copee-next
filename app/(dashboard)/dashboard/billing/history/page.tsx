@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { FilterXIcon } from "lucide-react";
 
 import { fetcher } from '@/src/lib/fetcher';
 
@@ -141,7 +142,7 @@ export default function BillingHistoryPage() {
                 setPage(1);
               }}
             >
-              Xóa bộ lọc
+              <FilterXIcon className="h-4 w-4" />Xóa bộ lọc
             </Button>
           </div>
         </div>

@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { fetcher, apiFetch } from "@/src/lib/fetcher";
+import { PlusIcon, Trash2Icon, PencilIcon, SettingsIcon, WifiIcon, SaveIcon } from "lucide-react";
 
 type Site = {
   id: string;
@@ -356,7 +357,7 @@ export default function SettingsPage() {
         >
           <DialogTrigger asChild>
             <Button onClick={() => { setIsAddSiteDialogOpen(true); setFormError(null); setWpTestResult(null); }}>
-              Thêm Site Mới
+              <PlusIcon className="h-4 w-4" />Thêm Site Mới
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -542,6 +543,7 @@ export default function SettingsPage() {
                     onClick={() => onTestConnection(site.id)}
                     disabled={testingSiteId === site.id}
                   >
+                    <WifiIcon className="h-4 w-4" />
                     {testingSiteId === site.id
                       ? "Đang test..."
                       : "Test Connection"}
@@ -551,7 +553,7 @@ export default function SettingsPage() {
                     size="sm"
                     onClick={() => openDeleteDialog(site)}
                   >
-                    Xoá
+                    <Trash2Icon className="h-4 w-4" />Xoá
                   </Button>
                 </div>
               </div>
@@ -584,7 +586,7 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => openEditWooKeysDialog(site)}
                       >
-                        {site.wooConsumerKey ? "Chỉnh sửa" : "Thiết lập"}
+                        {site.wooConsumerKey ? <><PencilIcon className="h-4 w-4" />Chỉnh sửa</> : <><SettingsIcon className="h-4 w-4" />Thiết lập</>}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -685,7 +687,7 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => openEditWpAuthDialog(site)}
                       >
-                        {site.wpUsername ? "Chỉnh sửa" : "Thiết lập"}
+                        {site.wpUsername ? <><PencilIcon className="h-4 w-4" />Chỉnh sửa</> : <><SettingsIcon className="h-4 w-4" />Thiết lập</>}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -784,7 +786,7 @@ export default function SettingsPage() {
                         size="sm"
                         onClick={() => openEditShopeeAffiliateDialog(site)}
                       >
-                        {site.shopeeAffiliateId ? "Chỉnh sửa" : "Thiết lập"}
+                        {site.shopeeAffiliateId ? <><PencilIcon className="h-4 w-4" />Chỉnh sửa</> : <><SettingsIcon className="h-4 w-4" />Thiết lập</>}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>
@@ -917,7 +919,7 @@ export default function SettingsPage() {
                 deleteConfirm.confirmText !== `Xoá ${deleteConfirm.siteName}`
               }
             >
-              Xoá Site
+              <Trash2Icon className="h-4 w-4" />Xoá Site
             </Button>
           </DialogFooter>
         </DialogContent>

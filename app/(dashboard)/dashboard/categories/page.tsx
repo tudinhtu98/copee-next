@@ -16,6 +16,7 @@ import useSWR from 'swr'
 import { CategoryMappingsDialog } from '@/components/category-mappings-dialog'
 
 import { fetcher } from '@/src/lib/fetcher'
+import { RefreshCwIcon } from "lucide-react"
 
 type Site = {
   id: string
@@ -144,7 +145,7 @@ export default function CategoriesPage() {
         </div>
         {selectedSiteId && (
           <Button onClick={onSyncCategories} disabled={isSyncing} variant="outline">
-            {isSyncing ? 'Đang sync...' : 'Sync Categories'}
+            <RefreshCwIcon className="h-4 w-4" />{isSyncing ? 'Đang sync...' : 'Sync Categories'}
           </Button>
         )}
       </div>
