@@ -51,14 +51,14 @@ export default function AdminSidebar() {
               value={item.value}
               asChild
               className={cn(
-                "w-full justify-start rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "w-full justify-start rounded-md px-3 py-2.5 text-base font-medium transition-colors",
                 "hover:bg-accent hover:text-accent-foreground",
                 "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground data-[state=active]:shadow-sm",
                 "data-[state=inactive]:text-muted-foreground"
               )}
             >
-              <Link href={item.href} className="flex items-center gap-2">
-                <item.icon className="h-4 w-4" />
+              <Link href={item.href} className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
                 {item.label}
               </Link>
             </TabsTrigger>
