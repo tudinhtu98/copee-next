@@ -49,7 +49,7 @@ export default function DashboardSidebar() {
   }
 
   return (
-    <aside className="w-64 shrink-0 border-r p-4">
+    <aside className="w-64 shrink-0 border-r p-4 flex flex-col">
       <div className="font-semibold mb-6 text-lg">Copee</div>
       <Tabs value={getCurrentTab()} className="w-full">
         <TabsList className="flex-col h-auto w-full items-start bg-transparent p-0 gap-1">
@@ -73,6 +73,20 @@ export default function DashboardSidebar() {
           ))}
         </TabsList>
       </Tabs>
+
+      <div className="pt-4">
+        <p className="text-sm font-medium text-muted-foreground mb-2">Hướng dẫn sử dụng</p>
+        <div className="w-full rounded-md overflow-hidden border">
+          <iframe
+            src="https://iframe.mediadelivery.net/embed/337647/eff3ff47-11b2-42ce-aef8-6f0fea02b898?autoplay=false&preload=false"
+            loading="lazy"
+            className="aspect-video w-full block"
+            style={{ border: "none" }}
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+      </div>
     </aside>
   );
 }
