@@ -14,6 +14,8 @@ import {
   KeyIcon,
   WalletIcon,
   ShieldIcon,
+  CirclePlayIcon,
+  DownloadIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -31,6 +33,7 @@ export default function DashboardSidebar() {
     if (pathname.startsWith("/dashboard/site-settings")) return "site-settings";
     if (pathname.startsWith("/dashboard/api-keys")) return "api-keys";
     if (pathname.startsWith("/dashboard/billing")) return "billing";
+    if (pathname.startsWith("/dashboard/guide")) return "guide";
     return "overview";
   };
 
@@ -42,6 +45,7 @@ export default function DashboardSidebar() {
     { value: "site-settings", href: "/dashboard/site-settings", label: "Cài đặt WordPress", icon: GlobeIcon },
     { value: "api-keys", href: "/dashboard/api-keys", label: "API Key cho Extension", icon: KeyIcon },
     { value: "billing", href: "/dashboard/billing", label: "Nạp tiền & Lịch sử", icon: WalletIcon },
+    { value: "guide", href: "/dashboard/guide", label: "Hướng dẫn sử dụng", icon: CirclePlayIcon },
   ];
 
   if (role === "ADMIN" || role === "MOD") {
@@ -49,7 +53,7 @@ export default function DashboardSidebar() {
   }
 
   return (
-    <aside className="w-64 shrink-0 border-r p-4 flex flex-col">
+    <aside className="w-64 shrink-0 border-r p-4 flex flex-col h-full">
       <div className="font-semibold mb-6 text-lg">Copee</div>
       <Tabs value={getCurrentTab()} className="w-full">
         <TabsList className="flex-col h-auto w-full items-start bg-transparent p-0 gap-1">
@@ -74,19 +78,15 @@ export default function DashboardSidebar() {
         </TabsList>
       </Tabs>
 
-      <div className="pt-4">
-        <p className="text-sm font-medium text-muted-foreground mb-2">Hướng dẫn sử dụng</p>
-        <div className="w-full rounded-md overflow-hidden border">
-          <iframe
-            src="https://iframe.mediadelivery.net/embed/337647/eff3ff47-11b2-42ce-aef8-6f0fea02b898?autoplay=false&preload=false"
-            loading="lazy"
-            className="aspect-video w-full block"
-            style={{ border: "none" }}
-            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-      </div>
+      <a
+        href="https://chromewebstore.google.com/detail/copee-shopee-product-copi/elindpfagpenoiaikhgjmpekhcnjkflj?hl=vi"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-auto flex items-center gap-2 rounded-md border px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
+      >
+        <DownloadIcon className="h-4 w-4" />
+        Tải Extension Copee
+      </a>
     </aside>
   );
 }
