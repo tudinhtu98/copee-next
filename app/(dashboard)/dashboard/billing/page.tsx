@@ -44,6 +44,24 @@ export default function BillingPage() {
   const { data: session } = useSession() as any
   const username = session?.user?.username || session?.user?.name || ''
   const [selectedAmount, setSelectedAmount] = useState(50000)
+  const [notifyState, setNotifyState] = useState<'idle' | 'sending' | 'sent'>('idle')
+
+  async function notifyTransferred() {
+    if (notifyState === 'sending') return
+    setNotifyState('sending')
+    try {
+      const res = await fetch('/api/proxy/billing/deposit-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: selectedAmount }),
+      })
+      if (!res.ok) throw new Error('failed')
+      setNotifyState('sent')
+    } catch {
+      setNotifyState('idle')
+      alert('Không gửi được thông báo, vui lòng thử lại hoặc liên hệ hỗ trợ.')
+    }
+  }
 
   const {
     data: balance,
@@ -55,7 +73,7 @@ export default function BillingPage() {
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Nạp tiền</h1>
@@ -91,7 +109,10 @@ export default function BillingPage() {
             <Button
               key={value}
               variant={selectedAmount === value ? 'default' : 'outline'}
-              onClick={() => setSelectedAmount(value)}
+              onClick={() => {
+                setSelectedAmount(value)
+                setNotifyState('idle')
+              }}
               className="relative"
             >
               {new Intl.NumberFormat('vi-VN').format(value)}₫
@@ -136,6 +157,18 @@ export default function BillingPage() {
             <p className="text-sm text-muted-foreground">
               Số dư sẽ được cộng sau khi chuyển khoản thành công. Có thể nhắn tin thông qua kênh Hỗ trợ để được cộng số dư nhanh hơn.
             </p>
+            {notifyState === 'sent' ? (
+              <p className="text-sm font-medium text-green-600">
+                ✓ Đã báo admin. Số dư sẽ được cộng sau khi đối soát chuyển khoản.
+              </p>
+            ) : (
+              <Button
+                onClick={notifyTransferred}
+                disabled={notifyState === 'sending'}
+              >
+                {notifyState === 'sending' ? 'Đang gửi...' : 'Tôi đã chuyển khoản — báo admin'}
+              </Button>
+            )}
           </div>
         )}
       </div>
