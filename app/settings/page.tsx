@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
@@ -107,6 +107,115 @@ function ChangePasswordForm() {
   );
 }
 
+// Telegram Linking Section — tạo mã để gắn Telegram vào tài khoản (dùng cho tính năng tạo video)
+function TelegramLinkSection() {
+  const [code, setCode] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [remaining, setRemaining] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  // Đặt NEXT_PUBLIC_TELEGRAM_BOT_USERNAME (không kèm @) để hiện nút mở bot nhanh.
+  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+
+  useEffect(() => {
+    if (!expiresAt) return;
+    const tick = () => {
+      const s = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
+      setRemaining(s);
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [expiresAt]);
+
+  const generate = async () => {
+    try {
+      setLoading(true);
+      const res = await apiFetch("/telegram/link-code", { method: "POST" });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({}));
+        throw new Error(e.message || "Không tạo được mã liên kết");
+      }
+      const data = await res.json();
+      setCode(data.code);
+      const ttl = data.expiresInSec ?? 600;
+      setExpiresAt(Date.now() + ttl * 1000);
+      setRemaining(ttl);
+    } catch (e: any) {
+      toast.error(e.message || "Lỗi khi tạo mã liên kết");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyCmd = async () => {
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(`/lienket ${code}`);
+      toast.success("Đã copy lệnh /lienket " + code);
+    } catch {
+      toast.error("Không copy được, hãy copy thủ công");
+    }
+  };
+
+  const expired = !!code && remaining <= 0;
+  const mm = String(Math.floor(remaining / 60)).padStart(2, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
+
+  return (
+    <div className="space-y-4">
+      <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+        <li>Bấm <b>Tạo mã liên kết</b> bên dưới.</li>
+        <li>Mở bot Telegram của copee.</li>
+        <li>
+          Gõ <code className="px-1 rounded bg-muted">/lienket &lt;mã&gt;</code> để gắn tài khoản.
+        </li>
+        <li>Gửi link sản phẩm Shopee (đã copy vào copee) cho bot để nhận video.</li>
+      </ol>
+
+      {!code || expired ? (
+        <Button onClick={generate} disabled={loading}>
+          {loading ? "Đang tạo mã..." : code ? "Tạo mã mới" : "Tạo mã liên kết"}
+        </Button>
+      ) : (
+        <div className="rounded-md border bg-muted/30 p-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-mono text-2xl font-bold tracking-widest">{code}</span>
+            <Badge variant="secondary">Còn {mm}:{ss}</Badge>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Vào bot gõ:{" "}
+            <code className="px-1 rounded bg-muted font-mono">/lienket {code}</code>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={copyCmd}>
+              Copy lệnh
+            </Button>
+            {botUsername && (
+              <Button size="sm" variant="outline" asChild>
+                <a
+                  href={`https://t.me/${botUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Mở bot Telegram
+                </a>
+              </Button>
+            )}
+            <Button size="sm" variant="ghost" onClick={generate} disabled={loading}>
+              Tạo mã khác
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {expired && (
+        <p className="text-sm text-destructive">Mã đã hết hạn, hãy tạo mã mới.</p>
+      )}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { data: session } = useSession() as any;
 
@@ -164,6 +273,18 @@ export default function SettingsPage() {
             </div>
             <ChangePasswordForm />
           </div>
+        </div>
+
+        {/* Telegram Linking */}
+        <div className="rounded-md border p-6 space-y-6">
+          <div>
+            <h2 className="text-lg font-semibold">Liên kết Telegram</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Gắn Telegram vào tài khoản để tạo video sản phẩm qua bot: gửi link
+              Shopee → nhận video.
+            </p>
+          </div>
+          <TelegramLinkSection />
         </div>
       </div>
     </div>
