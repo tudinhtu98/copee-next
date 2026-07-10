@@ -114,8 +114,8 @@ function TelegramLinkSection() {
   const [remaining, setRemaining] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Đặt NEXT_PUBLIC_TELEGRAM_BOT_USERNAME (không kèm @) để hiện nút mở bot nhanh.
-  const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
+  // Đặt NEXT_PUBLIC_VIDEO_BOT_USERNAME (không kèm @) để hiện nút mở bot video.
+  const botUsername = process.env.NEXT_PUBLIC_VIDEO_BOT_USERNAME;
 
   useEffect(() => {
     if (!expiresAt) return;
@@ -131,7 +131,7 @@ function TelegramLinkSection() {
   const generate = async () => {
     try {
       setLoading(true);
-      const res = await apiFetch("/telegram/link-code", { method: "POST" });
+      const res = await apiFetch("/video-bot/link-code", { method: "POST" });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
         throw new Error(e.message || "Không tạo được mã liên kết");
