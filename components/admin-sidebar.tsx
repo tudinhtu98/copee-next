@@ -12,6 +12,7 @@ import {
   FolderTreeIcon,
   PackageIcon,
   ScrollTextIcon,
+  SettingsIcon,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ export default function AdminSidebar() {
     if (pathname.startsWith("/admin/products")) return "products";
     if (pathname.startsWith("/admin/audit-logs")) return "audit-logs";
     if (pathname.startsWith("/admin/stats")) return "stats";
+    if (pathname.startsWith("/admin/settings")) return "settings";
     return "overview";
   };
 
@@ -38,6 +40,7 @@ export default function AdminSidebar() {
     { value: "categories", href: "/admin/categories", label: "Quản lý danh mục", icon: FolderTreeIcon },
     { value: "products", href: "/admin/products", label: "Quản lý sản phẩm", icon: PackageIcon },
     { value: "audit-logs", href: "/admin/audit-logs", label: "Nhật ký hoạt động", icon: ScrollTextIcon },
+    { value: "settings", href: "/admin/settings", label: "Cài đặt video", icon: SettingsIcon },
   ];
 
   return (
