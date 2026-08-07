@@ -2,12 +2,85 @@
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { apiFetch } from "@/src/lib/fetcher";
+import { apiFetch, fetcher } from "@/src/lib/fetcher";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+
+type Profile = {
+  id: string;
+  email: string;
+  username: string;
+  role: string;
+  balance: number;
+  shopeeAffiliateId: string | null;
+  telegramId: string | null;
+};
+
+// Shopee Affiliate ID — dùng để tạo link aff cho sản phẩm
+function ShopeeAffiliateForm() {
+  const { data: profile, mutate } = useSWR<Profile>("/auth/profile", fetcher);
+  const [affiliateId, setAffiliateId] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setAffiliateId(profile?.shopeeAffiliateId ?? "");
+  }, [profile?.shopeeAffiliateId]);
+
+  const save = async () => {
+    try {
+      setIsSaving(true);
+      const res = await apiFetch("/auth/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shopeeAffiliateId: affiliateId.trim() }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.message || "Không thể lưu Affiliate ID");
+      }
+
+      await mutate();
+      toast.success(
+        affiliateId.trim()
+          ? "Đã lưu Shopee Affiliate ID"
+          : "Đã xoá Shopee Affiliate ID",
+      );
+    } catch (e: any) {
+      toast.error(e.message || "Lỗi khi lưu Affiliate ID");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const unchanged = affiliateId.trim() === (profile?.shopeeAffiliateId ?? "");
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="shopeeAffiliateId">Shopee Affiliate ID</Label>
+        <Input
+          id="shopeeAffiliateId"
+          value={affiliateId}
+          onChange={(e) => setAffiliateId(e.target.value)}
+          placeholder="Ví dụ: 17384640229"
+        />
+        <p className="text-sm text-muted-foreground">
+          Lấy trong Shopee Affiliate Center. Sau khi lưu, bạn có thể bấm{" "}
+          <b>Cập nhật link aff</b> trong chi tiết sản phẩm để sinh link tiếp
+          thị. Để trống rồi lưu để xoá.
+        </p>
+      </div>
+      <Button onClick={save} disabled={isSaving || unchanged}>
+        {isSaving ? "Đang lưu..." : "Lưu Affiliate ID"}
+      </Button>
+    </div>
+  );
+}
 
 // Change Password Form Component
 function ChangePasswordForm() {
@@ -261,6 +334,17 @@ export default function SettingsPage() {
                 </Badge>
               </div>
             </div>
+          </div>
+
+          {/* Shopee Affiliate */}
+          <div className="space-y-4 border-t pt-6">
+            <div>
+              <h3 className="text-base font-semibold">Shopee Affiliate</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Nhập Affiliate ID để tạo link tiếp thị cho sản phẩm
+              </p>
+            </div>
+            <ShopeeAffiliateForm />
           </div>
 
           {/* Change Password */}

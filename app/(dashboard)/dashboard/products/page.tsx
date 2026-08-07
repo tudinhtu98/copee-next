@@ -63,8 +63,14 @@ type Product = {
   description: string | null;
   images?: string[] | null;
   currency?: string | null;
+  affiliateUrl?: string | null;
+  affiliateSubId?: string | null;
   createdAt: string;
   updatedAt?: string;
+};
+
+type Profile = {
+  shopeeAffiliateId: string | null;
 };
 
 type Site = {
@@ -753,13 +759,60 @@ function ProductDetailDialog({
 }) {
   const [localImages, setLocalImages] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState<number | null>(null);
+  const [affiliateUrl, setAffiliateUrl] = useState<string | null>(null);
+  const [isUpdatingAffiliate, setIsUpdatingAffiliate] = useState(false);
+
+  // Chỉ hiện nút tạo link aff khi user đã nhập Affiliate ID trong tài khoản
+  const { data: profile } = useSWR<Profile>(
+    open ? "/auth/profile" : null,
+    fetcher,
+  );
+  const hasAffiliateId = Boolean(profile?.shopeeAffiliateId);
 
   // Sync local images with product images when product changes
   useEffect(() => {
     if (product) {
       setLocalImages(Array.isArray(product.images) ? product.images : []);
+      setAffiliateUrl(product.affiliateUrl ?? null);
     }
   }, [product]);
+
+  const handleUpdateAffiliate = async () => {
+    if (!product || isUpdatingAffiliate) return;
+
+    setIsUpdatingAffiliate(true);
+    try {
+      const res = await apiFetch(`/products/${product.id}/affiliate-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || "Không tạo được link affiliate");
+      }
+
+      setAffiliateUrl(data.affiliateUrl);
+      toast.success("Đã cập nhật link affiliate");
+      onSaved?.();
+    } catch (e) {
+      const error = e as Error;
+      toast.error(error.message || "Không tạo được link affiliate");
+    } finally {
+      setIsUpdatingAffiliate(false);
+    }
+  };
+
+  const handleCopyAffiliate = async () => {
+    if (!affiliateUrl) return;
+    try {
+      await navigator.clipboard.writeText(affiliateUrl);
+      toast.success("Đã copy link affiliate");
+    } catch {
+      toast.error("Không copy được, hãy copy thủ công");
+    }
+  };
 
   if (!product) return null;
 
@@ -917,6 +970,70 @@ function ProductDetailDialog({
                   {product.sourceUrl}
                 </a>
               </div>
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <label className="text-sm font-medium">Link affiliate</label>
+                <div className="flex items-center gap-2">
+                  {affiliateUrl && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleCopyAffiliate}
+                    >
+                      Copy link
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    onClick={handleUpdateAffiliate}
+                    disabled={!hasAffiliateId || isUpdatingAffiliate}
+                    title={
+                      hasAffiliateId
+                        ? undefined
+                        : "Bạn chưa nhập Shopee Affiliate ID trong thông tin tài khoản"
+                    }
+                  >
+                    <RefreshCwIcon
+                      className={`h-4 w-4 ${isUpdatingAffiliate ? "animate-spin" : ""}`}
+                    />
+                    {isUpdatingAffiliate
+                      ? "Đang tạo..."
+                      : affiliateUrl
+                        ? "Cập nhật link aff"
+                        : "Tạo link aff"}
+                  </Button>
+                </div>
+              </div>
+              {affiliateUrl ? (
+                <div className="text-sm">
+                  <a
+                    href={affiliateUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline break-all"
+                  >
+                    {affiliateUrl}
+                  </a>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {hasAffiliateId ? (
+                    "Chưa có link affiliate. Bấm “Tạo link aff” để sinh link từ link nguồn."
+                  ) : (
+                    <>
+                      Bạn cần nhập Shopee Affiliate ID trong{" "}
+                      <a
+                        href="/settings"
+                        className="text-primary hover:underline"
+                      >
+                        thông tin tài khoản
+                      </a>{" "}
+                      trước khi tạo link.
+                    </>
+                  )}
+                </p>
+              )}
             </div>
           </div>
 
