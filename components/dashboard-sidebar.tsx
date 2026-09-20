@@ -16,6 +16,7 @@ import {
   ShieldIcon,
   CirclePlayIcon,
   DownloadIcon,
+  VideoIcon,
   type LucideIcon, MessageCircleIcon } from "lucide-react";
 
 export default function DashboardSidebar() {
@@ -29,6 +30,7 @@ export default function DashboardSidebar() {
     if (pathname.startsWith("/dashboard/products")) return "products";
     if (pathname.startsWith("/dashboard/upload-jobs")) return "upload-jobs";
     if (pathname.startsWith("/dashboard/fanpage")) return "fanpage";
+    if (pathname.startsWith("/dashboard/video")) return "video";
     if (pathname.startsWith("/dashboard/categories")) return "categories";
     if (pathname.startsWith("/dashboard/site-settings")) return "site-settings";
     if (pathname.startsWith("/dashboard/api-keys")) return "api-keys";
@@ -42,6 +44,7 @@ export default function DashboardSidebar() {
     { value: "products", href: "/dashboard/products", label: "Sản phẩm", icon: PackageIcon },
     { value: "upload-jobs", href: "/dashboard/upload-jobs", label: "Xử lý Upload", icon: UploadIcon },
     { value: "fanpage", href: "/dashboard/fanpage", label: "Fanpage Facebook", icon: MessageCircleIcon },
+    { value: "video", href: "/dashboard/video", label: "Video AI", icon: VideoIcon },
     { value: "categories", href: "/dashboard/categories", label: "Danh mục", icon: FolderTreeIcon },
     { value: "site-settings", href: "/dashboard/site-settings", label: "Cài đặt WordPress", icon: GlobeIcon },
     { value: "api-keys", href: "/dashboard/api-keys", label: "API Key cho Extension", icon: KeyIcon },
