@@ -48,6 +48,9 @@ export default function ApiKeysPage() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState("");
   const [newKeyExpiresInDays, setNewKeyExpiresInDays] = useState<number | undefined>(undefined);
+  // Quyền cho trợ lý AI / agent MCP: mặc định chỉ đọc, phải tự bật mới cho thao tác
+  const [aiRead, setAiRead] = useState(false);
+  const [aiWrite, setAiWrite] = useState(false);
   const [createdKey, setCreatedKey] = useState<CreateApiKeyResponse | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -81,6 +84,12 @@ export default function ApiKeysPage() {
         body: JSON.stringify({
           name: newKeyName,
           expiresInDays: newKeyExpiresInDays || undefined,
+          permissions: [
+            "products:read",
+            "products:write",
+            ...(aiRead || aiWrite ? ["ai:read"] : []),
+            ...(aiWrite ? ["ai:write"] : []),
+          ],
         }),
       });
 
@@ -94,6 +103,8 @@ export default function ApiKeysPage() {
       mutateApiKeys();
       setNewKeyName("");
       setNewKeyExpiresInDays(undefined);
+      setAiRead(false);
+      setAiWrite(false);
       setIsCreateDialogOpen(false);
       toast.success("API key đã được tạo thành công!");
     } catch (e: any) {
@@ -174,6 +185,34 @@ export default function ApiKeysPage() {
                     }
                     placeholder="Ví dụ: 90"
                   />
+                </div>
+                <div className="space-y-2 rounded-md border p-3">
+                  <p className="text-sm font-medium">Trợ lý AI / agent MCP</p>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={aiRead || aiWrite}
+                      disabled={aiWrite}
+                      onChange={(e) => setAiRead(e.target.checked)}
+                      className="mt-1"
+                    />
+                    <span>
+                      Cho phép ĐỌC dữ liệu qua MCP
+                      <span className="block text-xs text-muted-foreground">
+                        Agent (Claude Desktop…) xem được số dư, sản phẩm, job video, fanpage.
+                      </span>
+                    </span>
+                  </label>
+                  <label className="flex items-start gap-2 text-sm">
+                    <input type="checkbox" checked={aiWrite} onChange={(e) => setAiWrite(e.target.checked)} className="mt-1" />
+                    <span>
+                      Cho phép THAO TÁC qua MCP
+                      <span className="block text-xs text-muted-foreground">
+                        Agent được đề xuất và xác nhận: tạo ảnh, tạo video, đăng bài, đăng sản phẩm, xoá bài.
+                        Mỗi việc tốn điểm đều hiện chi phí trước. Chỉ bật cho agent bạn tin tưởng.
+                      </span>
+                    </span>
+                  </label>
                 </div>
               </div>
               <DialogFooter>

@@ -98,18 +98,23 @@ async function proxy(req: NextRequest, path: string[]) {
         'Content-Type': req.headers.get('content-type') || 'application/json',
         Authorization: 'Bearer ' + token,
       },
-      body: req.method === 'GET' ? undefined : await req.text(),
+      // arrayBuffer chứ không phải text: giữ nguyên dữ liệu nhị phân khi tải ảnh lên (multipart)
+      body: req.method === 'GET' ? undefined : Buffer.from(await req.arrayBuffer()),
       cache: 'no-store',
     })
 
     console.log('[proxy] Backend response:', { status: res.status, url })
 
-    const text = await res.text()
+    const contentType = res.headers.get('content-type') || 'application/json'
+    // Ảnh và file khác phải trả nguyên bytes; text() sẽ làm hỏng dữ liệu nhị phân
+    const isText = /json|text\/|xml|javascript/i.test(contentType)
+    const body = isText ? await res.text() : await res.arrayBuffer()
 
-    return new NextResponse(text, {
+    return new NextResponse(body, {
       status: res.status,
       headers: {
-        'content-type': res.headers.get('content-type') || 'application/json',
+        'content-type': contentType,
+        ...(res.headers.get('cache-control') ? { 'cache-control': res.headers.get('cache-control')! } : {}),
         ...corsHeaders,
       },
     })

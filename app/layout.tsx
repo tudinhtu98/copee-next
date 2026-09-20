@@ -5,6 +5,7 @@ import AppHeader from "@/components/app-header";
 import Providers from "@/src/app/providers";
 import { SetPasswordModal } from "@/components/set-password-modal";
 import ContactBar from "@/components/contact-bar";
+import AiChatWidget from "@/components/ai-chat-widget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,8 @@ export default function RootLayout({
           <AppHeader />
           {children}
           <SetPasswordModal />
+          {/* Trợ lý AI nổi ở mọi trang; nằm trong Providers vì cần phiên đăng nhập */}
+          <AiChatWidget />
         </Providers>
         <ContactBar />
       </body>
