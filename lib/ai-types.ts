@@ -140,6 +140,64 @@ export interface PagePost {
   localPostId: string | null;
 }
 
+// ───────────── Video AI ─────────────
+
+export type VideoKind = 'PRODUCT' | 'STORY';
+export type VideoStatus = 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED';
+
+export const VIDEO_STATUS_LABEL: Record<VideoStatus, string> = {
+  PENDING: 'Đang chờ',
+  PROCESSING: 'Đang dựng',
+  DONE: 'Xong',
+  FAILED: 'Lỗi',
+};
+
+export interface StoryScene {
+  spoken: string;
+  visual: string;
+}
+
+/** Kịch bản AI viết ở bước 1, người dùng sửa rồi mới bấm dựng video. */
+export interface StoryScript {
+  title: string;
+  scenes: (StoryScene & { words: number })[];
+  caption: string;
+  spokenText: string;
+  warnings: string[];
+  cost: number;
+}
+
+export interface StoryOptions {
+  styles: { value: string; label: string }[];
+  settings: { value: string; label: string }[];
+  maxWordsPerClip: number;
+}
+
+export interface VideoJob {
+  id: string;
+  kind: VideoKind;
+  status: VideoStatus;
+  title: string | null;
+  caption: string | null;
+  spokenText: string | null;
+  clips: number;
+  durationSec: number | null;
+  cost: number;
+  errorMessage: string | null;
+  createdAt: string;
+  product?: { title: string; sourceUrl: string } | null;
+}
+
+export interface VideoListResponse {
+  items: VideoJob[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+/** File mp4 đi qua proxy BFF để giữ nguyên việc kiểm tra quyền ở backend. */
+export function videoFileUrl(jobId: string): string {
+  return `/api/proxy/video/${jobId}/file`;
+}
+
 export interface Product {
   id: string;
   title: string;

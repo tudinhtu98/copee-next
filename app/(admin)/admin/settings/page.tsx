@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { fetcher, apiFetch } from "@/src/lib/fetcher";
 import { toast } from "sonner";
 
-type VideoSettings = { videoEngine: string; videoCost: number };
+type VideoSettings = { videoEngine: string; videoCost: number; storyEngine: string };
 
 const ENGINES = [
   {
@@ -40,18 +40,23 @@ export default function AdminVideoSettingsPage() {
   );
 
   const [engine, setEngine] = useState("omni");
+  const [storyEngine, setStoryEngine] = useState("veo");
   const [cost, setCost] = useState("5000");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (data) {
       setEngine(data.videoEngine);
+      setStoryEngine(data.storyEngine);
       setCost(String(data.videoCost));
     }
   }, [data]);
 
   const dirty =
-    !!data && (engine !== data.videoEngine || Number(cost) !== data.videoCost);
+    !!data &&
+    (engine !== data.videoEngine ||
+      storyEngine !== data.storyEngine ||
+      Number(cost) !== data.videoCost);
 
   const save = async () => {
     const c = Number(cost);
@@ -64,7 +69,7 @@ export default function AdminVideoSettingsPage() {
       const res = await apiFetch("/admin/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ videoEngine: engine, videoCost: c }),
+        body: JSON.stringify({ videoEngine: engine, storyEngine, videoCost: c }),
       });
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
@@ -119,12 +124,39 @@ export default function AdminVideoSettingsPage() {
           </div>
         </div>
 
+        {/* Model cho video kể chuyện */}
+        <div className="rounded-md border p-6 space-y-4">
+          <div>
+            <h2 className="text-lg font-semibold">Model cho video kể chuyện</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Video &quot;một người nói chuyện&quot;. Veo sinh được lời thoại kèm khẩu hình nên
+              để mặc định; Omni bắt buộc phải có ảnh chân dung.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label>Engine</Label>
+            <Select value={storyEngine} onValueChange={setStoryEngine} disabled={isLoading}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ENGINES.map((e) => (
+                  <SelectItem key={e.value} value={e.value}>
+                    {e.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         {/* Chi phí */}
         <div className="rounded-md border p-6 space-y-4">
           <div>
             <h2 className="text-lg font-semibold">Chi phí mỗi video</h2>
             <p className="text-sm text-muted-foreground mt-1">
-              Số điểm trừ vào tài khoản user khi tạo 1 video thành công.
+              Số điểm trừ vào tài khoản user cho MỖI clip dựng xong. Video kể chuyện 3 clip
+              trừ gấp 3 số này.
             </p>
           </div>
           <div className="space-y-2">
